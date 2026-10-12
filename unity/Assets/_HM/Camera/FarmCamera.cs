@@ -13,7 +13,7 @@ namespace HM.CameraRig
     {
         public const float DefaultPitch = 50f;      // degrees down from horizontal
         public const float DefaultYaw = 45f;        // degrees around Y; 45 shows two faces of a building
-        public const float DefaultDistance = 14f;   // metres from target to camera
+        public const float DefaultDistance = 20f;   // metres from target to camera
         public const float DefaultFov = 35f;        // narrow lens flattens perspective, reads as 3/4 view
         public static readonly Vector3 TargetHeight = new Vector3(0f, 1f, 0f);
 

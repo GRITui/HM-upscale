@@ -28,7 +28,8 @@ namespace HM.World
             float pitch = (dayFraction - 0.25f) * 360f;
             transform.rotation = Quaternion.Euler(pitch, -30f, 0f);
             float elevation = Mathf.Sin((dayFraction - 0.25f) * Mathf.PI * 2f);
-            float k = Mathf.Clamp01(elevation * 2f);
+            // Offset so the 06:00 start reads as early morning light rather than night.
+            float k = Mathf.Clamp01((elevation + 0.3f) * 2f);
             sun.intensity = Mathf.Lerp(nightIntensity, maxIntensity, k);
             sun.color = colour.Evaluate(dayFraction);
             RenderSettings.ambientLight = Color.Lerp(new Color(0.05f, 0.06f, 0.12f), new Color(0.5f, 0.55f, 0.6f), k);

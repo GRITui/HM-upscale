@@ -145,13 +145,13 @@ namespace HM.Importers
             new GameObject("Sleep", typeof(SleepController));
 
             // House with a bed trigger by the door, an NPC and the shipping bin.
-            Visual(null, Model("farmhouse"), PrimitiveType.Cube, "Farmhouse", new Color(0.7f, 0.6f, 0.5f), new Vector3(-8f, 1.5f, 6f), new Vector3(4f, 3f, 4f));
+            Visual(null, Model("farmhouse"), PrimitiveType.Cube, "Farmhouse", new Color(0.7f, 0.6f, 0.5f), new Vector3(10f, 1.5f, -1f), new Vector3(4f, 3f, 4f));
             var bed = new GameObject("Bed", typeof(Bed));
-            bed.transform.position = new Vector3(-6f, 0f, 3.5f);
+            bed.transform.position = new Vector3(7.5f, 0f, -1f);
             bed.GetComponent<Bed>().radius = 2.5f;
 
             var npc = new GameObject("Mira", typeof(NpcDialogue));
-            npc.transform.position = new Vector3(6f, 0f, 1f);
+            npc.transform.position = new Vector3(5f, 0f, 1.5f);
             npc.GetComponent<NpcDialogue>().dialogueJson = dialogue;
             Visual(npc.transform, Model("npc_villager"), PrimitiveType.Capsule, "NpcVisual", new Color(0.3f, 0.5f, 0.8f), new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f));
             npc.transform.rotation = Quaternion.Euler(0f, -135f, 0f);
@@ -168,9 +168,9 @@ namespace HM.Importers
                 Visual(null, fence, PrimitiveType.Cube, "Fence", new Color(0.6f, 0.45f, 0.28f), new Vector3(i + 0.5f, 0f, -1.5f), new Vector3(1f, 0.5f, 0.1f));
             }
             var tree = Model("tree"); var rock = Model("rock"); var tuft = Model("grass_tuft");
-            Vector3[] trees = { new Vector3(9f, 0, 8f), new Vector3(-12f, 0, -2f), new Vector3(12f, 0, -6f), new Vector3(3f, 0, 12f), new Vector3(-14f, 0, 10f) };
+            Vector3[] trees = { new Vector3(7f, 0, 8f), new Vector3(-9f, 0, -1f), new Vector3(12f, 0, -7f), new Vector3(2f, 0, 10f), new Vector3(-10f, 0, 6f) };
             foreach (var t in trees) Visual(null, tree, PrimitiveType.Cylinder, "Tree", new Color(0.2f, 0.45f, 0.2f), t + new Vector3(0, 1.5f, 0), new Vector3(1f, 1.5f, 1f));
-            Vector3[] rocks = { new Vector3(7f, 0, -2f), new Vector3(-9f, 0, -5f), new Vector3(10f, 0, 4f) };
+            Vector3[] rocks = { new Vector3(7f, 0, -2f), new Vector3(-9f, 0, -5f), new Vector3(11f, 0, 7f) };
             foreach (var r in rocks) Visual(null, rock, PrimitiveType.Sphere, "Rock", new Color(0.5f, 0.5f, 0.5f), r + new Vector3(0, 0.3f, 0), new Vector3(0.8f, 0.6f, 0.8f));
             for (int i = 0; i < 24; i++)
             {
