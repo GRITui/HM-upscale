@@ -82,6 +82,8 @@ namespace HM.Importers
             cam.GetComponent<Camera>().backgroundColor = Color.black;
             cam.GetComponent<Camera>().clearFlags = CameraClearFlags.SolidColor;
             new GameObject("GameClock", typeof(GameClockBehaviour));
+            new GameObject("Audio", typeof(HM.Audio.AudioService), typeof(HM.Audio.AudioBootstrap));
+            new GameObject("DevConsole", typeof(HM.Tools.DevConsole));
             new GameObject("Bootstrap", typeof(GameStartup));
             EditorSceneManager.SaveScene(scene, SceneDir + "/Boot.unity");
         }
@@ -117,18 +119,11 @@ namespace HM.Importers
 
             var camGo = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener), typeof(CinemachineBrain));
             camGo.tag = "MainCamera";
-            camGo.transform.position = new Vector3(0f, 3f, -6f);
+            camGo.transform.position = new Vector3(-8f, 12f, -8f);
 
             var rigGo = new GameObject("Follow Camera", typeof(CinemachineCamera));
-            var rig = rigGo.GetComponent<CinemachineCamera>();
-            rig.Follow = player.transform;
-            rig.LookAt = player.transform;
-            rig.Lens.FieldOfView = 50f;
-            var tp = rigGo.AddComponent<CinemachineThirdPersonFollow>();
-            tp.CameraDistance = 6f;
-            tp.ShoulderOffset = new Vector3(0f, 0.5f, 0f);
-            tp.VerticalArmLength = 0.4f;
-            rigGo.AddComponent<CinemachineRotationComposer>();
+            HM.CameraRig.FarmCamera.Configure(rigGo.GetComponent<CinemachineCamera>(), player.transform);
+            camGo.transform.rotation = HM.CameraRig.FarmCamera.Rotation(HM.CameraRig.FarmCamera.DefaultPitch, HM.CameraRig.FarmCamera.DefaultYaw);
 
             // A few flat-colour props so movement is readable.
             for (int i = 0; i < 6; i++)
