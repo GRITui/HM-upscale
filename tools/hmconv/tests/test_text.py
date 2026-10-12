@@ -18,6 +18,20 @@ class T(unittest.TestCase):
         self.assertEqual(t.sector_strings(bytes(t.SECTOR)), [])
         self.assertEqual(len(t.dump_file(s + bytes(t.SECTOR))), 1)
 
+    def test_digits_controls_entries(self):
+        c = [0x0F87, 0x0FF7, 0x4010, 0x48, 0x41, 0x69, 0xFFFF]
+        r = t.decode_codes(c)[0]
+        self.assertEqual(r["text"], "{16}81-")
+        self.assertEqual(t.face_of(c), 0x0FEF - 0x0F87)
+        self.assertEqual(t.classify_control(0x0E2F), ("colour", 0))
+        self.assertEqual(t.classify_control(0x0FFC), ("wait_key", None))
+        self.assertEqual(t.decode_codes([0x62, 0xFFFF], guess=True)[0]["text"], "?")
+        sec = struct.pack("<3H", 0x0FF7, 0x07, 0xFFFF).ljust(t.SECTOR, b"\0")
+        ent = struct.pack("<i", 104) + bytes(t.ENTRY_TEXT - 4) + sec
+        ents = t.parse_entries(ent + struct.pack("<i", -1) + bytes(t.ENTRY - 4))
+        self.assertEqual(len(ents), 1)
+        self.assertEqual((ents[0]["id"], ents[0]["face"]), (0, 104))
+
 
 if __name__ == "__main__":
     unittest.main()
