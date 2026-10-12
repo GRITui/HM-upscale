@@ -61,6 +61,23 @@ public class DecompAt extends GhidraScript {
         } else if (cmd.equals("dis")) {
             Address ad = toAddr(a[2]); int n = Integer.parseInt(a[3]);
             for (int i = 0; i < n; i++) { Instruction in = getInstructionAt(ad); if (in == null) break; out.println(ad + "  " + in); ad = in.getNext() == null ? ad.add(4) : in.getNext().getAddress(); }
+        } else if (cmd.equals("scan")) {
+            // list functions that look like byte-stream decoders: many lbu, some sb, nibble ops
+            FunctionIterator fi = currentProgram.getFunctionManager().getFunctions(true);
+            while (fi.hasNext()) { Function f = fi.next();
+                int lbu = 0, sb = 0, nib = 0, n = 0, back = 0;
+                InstructionIterator ii = currentProgram.getListing().getInstructions(f.getBody(), true);
+                while (ii.hasNext()) { Instruction in = ii.next(); n++; String m = in.getMnemonicString();
+                    if (m.equals("lbu")) lbu++; else if (m.equals("sb")) sb++;
+                    else if (m.equals("andi")) { ghidra.program.model.scalar.Scalar sc = in.getScalar(2); if (sc != null && sc.getUnsignedValue() == 15) nib++; }
+                    else if (m.equals("srl") || m.equals("srl16")) { ghidra.program.model.scalar.Scalar sc = in.getScalar(2); if (sc != null && sc.getUnsignedValue() == 4) nib++; }
+                    if (in.getFlowType().isConditional() || in.getFlowType().isJump()) { for (Address t : in.getFlows()) if (t.compareTo(in.getAddress()) < 0) back++; }
+                }
+                if (lbu >= Integer.parseInt(a[2]) && sb >= Integer.parseInt(a[3]) && back >= 2 && n < 2000) out.println(f.getEntryPoint() + " n=" + n + " lbu=" + lbu + " sb=" + sb + " nib=" + nib + " back=" + back);
+            }
+        } else if (cmd.equals("decall")) {
+            FunctionIterator fi2 = currentProgram.getFunctionManager().getFunctions(true);
+            while (fi2.hasNext()) { dec(fi2.next()); }
         } else if (cmd.equals("xref")) {
             for (Reference r : getReferencesTo(toAddr(a[2]))) { out.println("xref " + r.getFromAddress() + " in " + getFunctionContaining(r.getFromAddress())); }
         }
