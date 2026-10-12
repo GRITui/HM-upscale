@@ -86,6 +86,17 @@ class T(unittest.TestCase):
             m = json.load(f)
         self.assertEqual(m[1]["type"], "ptr_table")
 
+    def test_named_segments(self):
+        blob, hdt = make_hdt_container([b"abc", b"def"])
+        out = os.path.join(self.d.name, "n")
+        res = uc.unpack_hdt(self.w("N.BIN", blob), self.w("N.HDT", hdt), out, uc.BOY_SEGMENT_NAMES)
+        self.assertEqual(res[0]["name"], "objcg\\gf.bin")
+        self.assertEqual(res[1]["name"], "objcg\\face.bin")
+        self.assertEqual(len(uc.BOY_SEGMENT_NAMES), 33)
+        self.assertEqual(uc.BOY_SEGMENT_NAMES[-1], "NOTHING")
+        res = uc.unpack_hdt(self.w("N.BIN", blob), self.w("N.HDT", hdt), out)
+        self.assertNotIn("name", res[0])
+
     def test_classify_misc(self):
         self.assertEqual(classify(b"\x0d\x10\x0a\0" + b"\0" * 20)[0], "stream_100d")
         self.assertEqual(classify(b"\xe0\xff\xbd\x27" + b"\0" * 20)[0], "code_mips_overlay")

@@ -24,6 +24,29 @@ except ImportError:  # run as a script
 
 SECTOR = 0x800
 
+# Segment names for BOY_FILE, read from the name table in hmpsp.prx (vaddr 0xeee30,
+# 0x28-byte entries: u32 flag, char[0x20] name, u32 runtime offset). Index == HDT segment.
+# Flag 1 = data file, 0 = code overlay. The last entry is the end sentinel.
+# See docs/formats/segment-index.md. GIRL_FILE has 36 offsets; its names are unverified.
+BOY_SEGMENT_NAMES = [
+    "objcg\\gf.bin", "objcg\\face.bin", "objcg\\messege0.bin", "objcg\\messege1.bin",
+    "objcg\\messege2.bin", "objcg\\messege3.bin", "objcg\\messege4.bin",
+    "data\\font\\Font_all.tex", "obj\\DEBUG.bin", "objcg\\sound.stm", "obj\\PdaSamp.bin",
+    "obj\\GF_FARM.bin", "objcg\\event_s.bin", "objcg\\evch.bin", "ObjCg\\Status.Bin",
+    "Obj\\saveload.bin", "ObjCg\\Slp.Bin", "Obj\\GF_MG1.Bin", "ObjCg\\MG1.Bin",
+    "Obj\\GF_MG2.Bin", "ObjCg\\MG2.Bin", "Obj\\GF_MG3.Bin", "ObjCg\\MG3.Bin",
+    "Obj\\GF_MG4.Bin", "ObjCg\\MG4.Bin", "Obj\\GF_MG5.Bin", "ObjCg\\MG5.Bin",
+    "Obj\\GF_TITLE.Bin", "Obj\\GF_STAFF.Bin", "ObjCg\\MesEv.Bin", "Obj\\GF_swind.bin",
+    "Obj\\gf_mcard.bin", "NOTHING",
+]
+
+
+def segment_name(idx, names=None):
+    """Original game path for segment idx, or None when unknown."""
+    if names and 0 <= idx < len(names):
+        return names[idx]
+    return None
+
 
 def parse_hdt(hdt, total_size=None):
     """Return a list of (offset, size) segments."""
@@ -63,7 +86,7 @@ def _write(outdir, idx, data, manifest, prefix):
     return {"file": fn, "size": len(data), "sha1": hashlib.sha1(data).hexdigest(), "type": tag}
 
 
-def unpack_hdt(bin_path, hdt_path, outdir):
+def unpack_hdt(bin_path, hdt_path, outdir, names=None):
     with open(hdt_path, "rb") as f:
         hdt = f.read()
     total = os.path.getsize(bin_path)
@@ -75,6 +98,9 @@ def unpack_hdt(bin_path, hdt_path, outdir):
             f.seek(off)
             e = _write(outdir, i, f.read(size), out, "seg")
             e["offset"] = off
+            nm = segment_name(i, names)
+            if nm:
+                e["name"] = nm
             out.append(e)
     return out
 
@@ -102,9 +128,11 @@ def main(argv=None):
     ap.add_argument("bin", help="payload file (BOY_FILE.BIN / DATA001.BIN)")
     ap.add_argument("index", help="index file (.HDT / DATA000.BIN)")
     ap.add_argument("-o", "--out", required=True)
+    ap.add_argument("--boy-names", action="store_true",
+                    help="hdt mode: label segments with the BOY_FILE name table")
     a = ap.parse_args(argv)
     if a.mode == "hdt":
-        res = unpack_hdt(a.bin, a.index, a.out)
+        res = unpack_hdt(a.bin, a.index, a.out, BOY_SEGMENT_NAMES if a.boy_names else None)
     else:
         res = unpack_toc(a.index, a.bin, a.out)
     with open(os.path.join(a.out, "manifest.json"), "w") as f:
