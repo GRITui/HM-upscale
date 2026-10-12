@@ -21,6 +21,7 @@ namespace HM.Characters
         void Awake()
         {
             controller = GetComponent<CharacterController>();
+            controller.minMoveDistance = 0f; // default 0.001 m swallows small per-frame moves at very high frame rates
             move = new InputAction("Move", InputActionType.Value);
             move.AddCompositeBinding("2DVector")
                 .With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")

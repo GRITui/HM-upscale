@@ -52,7 +52,7 @@ namespace HM.Tests.PlayMode
 
             Press(keyboard.wKey);
             int frames = 0; float simTime = 0f;
-            while (simTime < 0.6f && frames < 600) { yield return null; simTime += Time.deltaTime; frames++; }
+            while (simTime < 0.6f && frames < 200000) { yield return null; simTime += Time.deltaTime; frames++; }
             Release(keyboard.wKey);
 
             float moved = Vector3.Distance(new Vector3(start.x, 0, start.z), new Vector3(player.transform.position.x, 0, player.transform.position.z));
