@@ -1,0 +1,34 @@
+# Copyrighted / derived game data: never commit
+assets/
+*.iso
+*.chd
+*.cso
+*.pbp
+*.bin
+*.hdt
+*.prx
+EBOOT*
+BOOT.BIN
+PARAM.SFO
+# Unity
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/UserSettings/
+unity/Obj/
+unity/Build/
+unity/Builds/
+*.csproj
+*.sln
+*.pidb
+.vs/
+.idea/
+# Python / node
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.DS_Store
+# Local env
+.env
+*.env
