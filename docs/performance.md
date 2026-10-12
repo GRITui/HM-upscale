@@ -62,10 +62,79 @@ count, its worst frame and how many warmup frames exceeded 100 ms. The
 statistics are unit tested (PerfCaptureSessionTests); the player-side wiring
 has been compiled but not yet run in a build.
 
-No fps figure is claimed for the Phase 6 slice: the machine was not idle when
-this was written (load average above 3), so a number would not be honest.
-Run the capture on an idle machine and record `uptime` in the note.
+Extra flags: `-hm-perf-skipday` jumps the game clock one full day halfway
+through the capture window, `-hm-perf-render` renders the main camera into an
+offscreen 1280x720 target every frame, and `-hm-target-fps N` overrides the
+60 fps cap (`-1` = uncapped, diagnostics only). `-hm-no-prewarm` disables the
+shader warmup for A/B runs.
 
-The 3.4 s first-frame spike measured above is a shader warm-up. A
-ShaderVariantCollection prewarm is the intended fix but has not been
-generated or measured yet.
+## Phase 6 gate measurement
+
+Conditions, stated plainly: measured under background load of about 3 (not an
+idle-machine figure; loginwindow, WindowServer and the wallpaper extension use
+CPU while the session is locked). `uptime` before: 3.10 3.26 3.05, after:
+2.74 3.10 3.01. The screen was locked, so no OS window could be presented.
+The player ran with `-batchmode` plus `-hm-perf-render` (offscreen 1280x720
+camera render each frame on the real Apple M1 Metal device, development build,
+HUD not included in the render). Raw JSON: `perf.json` in the session scratchpad
+(not committed).
+
+`-hm-perf-capture 130 -hm-perf-warmup 5 -hm-perf-skipday -hm-perf-render`, with
+one in-game day skipped mid-capture:
+
+| Metric | Result | Target | Met |
+|--------|--------|--------|-----|
+| Frames | 7493 over 130 s | | |
+| Average | 17.35 ms (57.6 fps) | <= 16.7 ms | no |
+| p95 | 18.60 ms | | |
+| p99 | 22.09 ms | <= 20 ms | no |
+| Max | 87.5 ms | | |
+| Frames over budget | 2061 of 7493 | | |
+| Draw calls avg / max | 160 / 162 | <= 1500 | yes |
+| SetPass avg / max | 5 / 5 | <= 150 | yes |
+| Triangles avg / max | 10.8 k / 11.1 k | <= 1.5 M | yes |
+
+The frame-time target was missed in this run. Evidence on the cause, from the
+same build and conditions:
+
+- Uncapped (`-hm-target-fps -1 -hm-perf-render`, 15 s): avg 0.41 ms, p99 0.54 ms,
+  max 0.93 ms, about 160 draw calls and 10.8 k triangles per frame. That is
+  CPU-side render submission only; GPU execution time was not measured.
+- Every capped run lands on avg 17.0 to 17.35 ms regardless of content (20 s
+  runs with and without prewarm, 12 s runs, 130 s run), which points to the
+  60 fps limiter overshooting in a headless player under load, not scene cost.
+- The p99 and max spikes (22 ms, 87 ms) coincide with machine load and
+  were not attributed to any in-game system.
+- Not verified: a windowed player at 60 fps on an idle machine. No setting was
+  changed to make the number pass; re-measure in a real window with the session
+  unlocked before treating the gate as passed or failed.
+
+An earlier capture without `-hm-perf-render` (cameras do no work in
+`-batchmode`) is not a render measurement and should be ignored; its render
+counters read 0. With `-hm-perf-render` they read correctly.
+
+### Shader prewarm A/B
+
+`GameStartup` calls `Shader.WarmupAllShaders()` after the first area loads
+(`-hm-no-prewarm` skips it). Capture 12 s after a 6 s warmup, two runs each:
+
+| Run | Warmup max frame | Warmup frames over 100 ms | Capture max |
+|-----|------------------|---------------------------|-------------|
+| no prewarm 1 | 116.6 ms | 2 | 20.8 ms |
+| prewarm 1 | 132.6 ms | 2 | 20.7 ms |
+| no prewarm 2 | 315.3 ms | 2 | 19.9 ms |
+| prewarm 2 | 165.1 ms | 2 | 20.4 ms |
+
+Result: inconclusive. The warmup window still contains two frames over 100 ms
+with and without the prewarm, and run-to-run variance (117 to 315 ms without)
+is larger than any difference. The old 3.4 s first-frame spike was not seen in
+these batchmode runs. The prewarm is kept because it is harmless, but it has
+not been shown to remove the first-seconds hitch.
+
+### HUD and framing check
+
+Verified from an in-engine render of the main camera to a PNG (`-hm-shot`),
+not an OS window screenshot (the locked session prevents one). The uGUI HUD
+draws date, time, phase, gold, stamina and held tool; the farmhouse, trees,
+fences, NPC and player are visible. The farmhouse roof is clipped at the top
+edge of the frame at the default camera distance of 20.
