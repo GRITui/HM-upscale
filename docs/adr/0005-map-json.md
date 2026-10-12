@@ -36,4 +36,4 @@ returns a `BuiltMap` with Root, Spawns, ModelCount and PlaceholderCount.
 `AddressablesModelSource` resolves ids through Addressables; tests use
 `DictionaryModelSource`. Tests use a synthetic map only.
 
-Not yet done: additive scene loading per area.
+Additive per-area scene loading is done: `AreaSceneService` loads and unloads area scenes on top of the persistent Boot scene, and `MapAreas` holds runtime Map-JSON areas.
