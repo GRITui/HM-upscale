@@ -1,6 +1,7 @@
 using System.IO;
 using HM.Characters;
 using HM.Core;
+using HM.Gameplay;
 using HM.UI;
 using HM.World;
 using Unity.Cinemachine;
@@ -108,14 +109,15 @@ namespace HM.Importers
             ground.transform.localScale = new Vector3(10f, 1f, 10f);
             ground.GetComponent<Renderer>().sharedMaterial = FlatMaterial("Ground", new Color(0.36f, 0.55f, 0.28f));
 
-            var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "Player";
-            Object.DestroyImmediate(player.GetComponent<CapsuleCollider>());
-            player.transform.position = new Vector3(0f, 1.1f, 0f);
+            // Player: empty root carries the controller; the visual is a swappable child (glb or capsule).
+            var player = new GameObject("Player");
+            player.transform.position = new Vector3(0f, 0f, -3f);
             var cc = player.AddComponent<CharacterController>();
-            cc.height = 2f; cc.radius = 0.5f;
+            cc.height = 1.8f; cc.radius = 0.35f; cc.center = new Vector3(0f, 0.9f, 0f);
             player.AddComponent<PlayerMover>();
-            player.GetComponent<Renderer>().sharedMaterial = FlatMaterial("Player", new Color(0.9f, 0.7f, 0.2f));
+            player.AddComponent<PlayerInteractor>();
+            player.AddComponent<WalkBob>();
+            Visual(player.transform, Model("player"), PrimitiveType.Capsule, "PlayerVisual", new Color(0.9f, 0.7f, 0.2f), new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f));
 
             var camGo = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener), typeof(CinemachineBrain));
             camGo.tag = "MainCamera";
@@ -125,17 +127,87 @@ namespace HM.Importers
             HM.CameraRig.FarmCamera.Configure(rigGo.GetComponent<CinemachineCamera>(), player.transform);
             camGo.transform.rotation = HM.CameraRig.FarmCamera.Rotation(HM.CameraRig.FarmCamera.DefaultPitch, HM.CameraRig.FarmCamera.DefaultYaw);
 
-            // A few flat-colour props so movement is readable.
-            for (int i = 0; i < 6; i++)
+            // Farm world: rules + dialogue data, plot grid and art slots.
+            var worldGo = new GameObject("FarmWorld", typeof(FarmWorld));
+            var world = worldGo.GetComponent<FarmWorld>();
+            world.rulesJson = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/_HM/Farming/Data/rules.json");
+            var dialogue = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/_HM/Dialogue/Data/dialogue.json");
+            world.fallbackMaterial = FlatMaterial("Flat", Color.white);
+            world.untilledPrefab = Model("ground_tile");
+            world.tilledPrefab = Model("soil_tilled");
+            world.wateredPrefab = Model("soil_watered");
+            world.crops = new[]
             {
-                var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cube.name = "Crate " + i;
-                cube.transform.position = new Vector3(-12f + i * 5f, 0.5f, 10f);
-                cube.GetComponent<Renderer>().sharedMaterial = FlatMaterial("Crate", new Color(0.55f, 0.38f, 0.2f));
+                new CropSlot { cropId = "sprout_beet", stages = new[] { Model("turnip_0"), Model("turnip_1"), Model("turnip_2") }, fallbackColour = new Color(0.8f, 0.25f, 0.45f) },
+                new CropSlot { cropId = "plain_corn", stages = new[] { Model("potato_0"), Model("potato_1"), Model("potato_2") }, fallbackColour = new Color(0.9f, 0.8f, 0.3f) },
+            };
+            world.toolPrefabs = new[] { Model("hoe"), Model("watering_can"), Model("seed_bag"), null };
+            new GameObject("Sleep", typeof(SleepController));
+
+            // House with a bed trigger by the door, an NPC and the shipping bin.
+            Visual(null, Model("farmhouse"), PrimitiveType.Cube, "Farmhouse", new Color(0.7f, 0.6f, 0.5f), new Vector3(-8f, 1.5f, 6f), new Vector3(4f, 3f, 4f));
+            var bed = new GameObject("Bed", typeof(Bed));
+            bed.transform.position = new Vector3(-6f, 0f, 3.5f);
+            bed.GetComponent<Bed>().radius = 2.5f;
+
+            var npc = new GameObject("Mira", typeof(NpcDialogue));
+            npc.transform.position = new Vector3(6f, 0f, 1f);
+            npc.GetComponent<NpcDialogue>().dialogueJson = dialogue;
+            Visual(npc.transform, Model("npc_villager"), PrimitiveType.Capsule, "NpcVisual", new Color(0.3f, 0.5f, 0.8f), new Vector3(0f, 0.9f, 0f), new Vector3(0.7f, 0.9f, 0.7f));
+            npc.transform.rotation = Quaternion.Euler(0f, -135f, 0f);
+
+            var bin = new GameObject("ShippingBin", typeof(ShippingBin));
+            bin.transform.position = new Vector3(4f, 0f, -4f);
+            Visual(bin.transform, null, PrimitiveType.Cube, "BinVisual", new Color(0.55f, 0.38f, 0.2f), new Vector3(0f, 0.4f, 0f), new Vector3(1.2f, 0.8f, 0.8f));
+
+            // Scenery: fence around the plots, trees and rocks.
+            var fence = Model("fence_segment");
+            for (int i = -4; i <= 3; i++)
+            {
+                Visual(null, fence, PrimitiveType.Cube, "Fence", new Color(0.6f, 0.45f, 0.28f), new Vector3(i + 0.5f, 0f, 4.5f), new Vector3(1f, 0.5f, 0.1f));
+                Visual(null, fence, PrimitiveType.Cube, "Fence", new Color(0.6f, 0.45f, 0.28f), new Vector3(i + 0.5f, 0f, -1.5f), new Vector3(1f, 0.5f, 0.1f));
+            }
+            var tree = Model("tree"); var rock = Model("rock"); var tuft = Model("grass_tuft");
+            Vector3[] trees = { new Vector3(9f, 0, 8f), new Vector3(-12f, 0, -2f), new Vector3(12f, 0, -6f), new Vector3(3f, 0, 12f), new Vector3(-14f, 0, 10f) };
+            foreach (var t in trees) Visual(null, tree, PrimitiveType.Cylinder, "Tree", new Color(0.2f, 0.45f, 0.2f), t + new Vector3(0, 1.5f, 0), new Vector3(1f, 1.5f, 1f));
+            Vector3[] rocks = { new Vector3(7f, 0, -2f), new Vector3(-9f, 0, -5f), new Vector3(10f, 0, 4f) };
+            foreach (var r in rocks) Visual(null, rock, PrimitiveType.Sphere, "Rock", new Color(0.5f, 0.5f, 0.5f), r + new Vector3(0, 0.3f, 0), new Vector3(0.8f, 0.6f, 0.8f));
+            for (int i = 0; i < 24; i++)
+            {
+                float a = i * 2.4f; float rad = 6f + (i % 7) * 1.7f;
+                var pos = new Vector3(Mathf.Cos(a) * rad, 0f, Mathf.Sin(a) * rad);
+                if (tuft != null) Visual(null, tuft, PrimitiveType.Cube, "Tuft", Color.green, pos, Vector3.one);
             }
 
-            new GameObject("Clock HUD", typeof(ClockHud));
+            var hudGo = new GameObject("Slice HUD", typeof(SliceHud));
+            _ = hudGo;
             EditorSceneManager.SaveScene(scene, SceneDir + "/SliceFarm.unity");
+        }
+
+        static GameObject Model(string name) =>
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_HM/Art/Models/" + name + ".glb");
+
+        /// <summary>Instantiate the glb if present, else a flat-colour primitive. Primitive pos/scale only apply to the fallback.</summary>
+        static GameObject Visual(Transform parent, GameObject model, PrimitiveType fallback, string name, Color colour, Vector3 pos, Vector3 scale)
+        {
+            GameObject go;
+            if (model != null)
+            {
+                go = (GameObject)PrefabUtility.InstantiatePrefab(model);
+                go.transform.position = parent != null ? parent.position : pos;
+                if (parent == null) go.transform.position = new Vector3(pos.x, 0f, pos.z);
+            }
+            else
+            {
+                go = GameObject.CreatePrimitive(fallback);
+                Object.DestroyImmediate(go.GetComponent<Collider>());
+                go.transform.position = (parent != null ? parent.position : Vector3.zero) + pos;
+                go.transform.localScale = scale;
+                go.GetComponent<Renderer>().sharedMaterial = FlatMaterial(name, colour);
+            }
+            go.name = name;
+            if (parent != null) go.transform.SetParent(parent, true);
+            return go;
         }
 
         static Material FlatMaterial(string name, Color colour)
