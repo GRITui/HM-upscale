@@ -1,5 +1,5 @@
 # Copyrighted / derived game data: never commit
-assets/
+/assets/
 *.iso
 *.chd
 *.cso
