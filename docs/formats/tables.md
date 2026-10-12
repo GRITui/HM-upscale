@@ -1,19 +1,27 @@
-# Data tables (items, crops, prices, calendar, relationships) - NOT SOLVED
+# Data tables (items, seeds, prices)
 
-Status after round 3: no rule table has been located or parsed.
+Status round 4: item/shop/seed price table located and parsed (`tools/hmconv/tables.py`).
+Crops growth days, calendar, affection and stamina tables are NOT located.
 
-## What is known
-- Item/shop/event strings are not stored as ASCII; dialogue and names use the u16 glyph
-  codes in text.md, so string search over the ELF finds nothing useful.
-- seg011 (GF_FARM overlay) and the event_s overlay (seg012) are the likeliest homes for
-  farm rules (crop growth, shipping prices). They are MIPS code plus data and need
-  disassembly around the shop and shipping routines.
-- Event scripts (map.md) are 16-byte commands whose opcodes are still unknown; calendar
-  events and relationship checks will be expressed there.
+## Item/shop table
+In `hmpsp.prx.elf` at file offset 0x12763C (Ghidra address = offset - 0x74): 331 rows of
+0x28 bytes, each 20 little-endian u16 fields.
 
-## Next steps
-1. Decode the Font_all page so item names can be searched as glyph-code sequences.
-2. Locate the name string, then find u32/u16 arrays adjacent to it (price, sell value).
-3. Trace the shipping-bin handler in seg011 to find the sell-price lookup base.
+| field | meaning | confidence |
+|---|---|---|
+| f0 | signed small delta (stamina/fatigue?) | low |
+| f4 | kind word: 0x4000 item/tool, 0x4040 seed, 0x8000/0x9000/0x2000/0x0200 other classes | medium |
+| f5 | low byte class (2 = seed); for seeds high byte = seed index (skips 0x0F, 0x13) | high |
+| f11 | item id (-1 none) | medium |
+| f12 | buy price | high |
+| f13 | sell / value | medium |
 
-No parser is provided.
+Extractable: 20 seed buy prices (rows 33-53), about 8 shop item prices (rows 25-32),
+about 100 sell/value entries (rows 64-159), plus large-price rows (3000-20000) that are
+likely livestock/machines/house items (unlabelled).
+
+An unidentified 20-byte-row id table (ids 0x41-0x55) sits at 0x127434-0x1275EC.
+
+## Not solved
+Crop growth days, calendar/festival dates, affection values, stamina costs. No code
+references to the table have been traced (the program is not analysed in Ghidra).
