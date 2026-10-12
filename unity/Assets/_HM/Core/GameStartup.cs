@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 namespace HM.Core
 {
     /// <summary>Boot scene entry: sets the 60 fps target and loads the first gameplay scene.</summary>
-    public sealed class GameBootstrap : MonoBehaviour
+    public sealed class GameStartup : MonoBehaviour
     {
         public const int TargetFrameRate = 60;
         [SerializeField] string firstScene = "SliceFarm";
