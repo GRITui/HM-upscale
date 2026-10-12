@@ -6,7 +6,7 @@ BAD_EXT='\.(iso|chd|cso|pbp|bin|hdt|prx|sfo|at3|at9|pmf|gim|pak)$'
 fail=0
 while IFS= read -r f; do
   [ -f "$f" ] || continue
-  if echo "$f" | grep -Eiq "$BAD_EXT|^assets/|EBOOT"; then
+  if echo "$f" | grep -Eiq "$BAD_EXT|^assets/|(^|/)EBOOT[^/]*$"; then
     echo "BLOCKED (game-data path/extension): $f"; fail=1; continue
   fi
   sz=$(wc -c < "$f")
