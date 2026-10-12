@@ -64,6 +64,14 @@ namespace HM.Core
             TotalMinutes = Math.Max(0, totalMinutes);
         }
 
+        /// <summary>Like SetTotalMinutes but raises DayChanged when the day index changes (used by dev tools and sleep skips).</summary>
+        public void JumpTo(double totalMinutes)
+        {
+            int before = DayIndex;
+            SetTotalMinutes(totalMinutes);
+            if (DayIndex != before) DayChanged?.Invoke(DayIndex);
+        }
+
         public string FormatTime()
         {
             int m = (int)MinuteOfDay;
