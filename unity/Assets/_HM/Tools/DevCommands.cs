@@ -7,7 +7,7 @@ namespace HM.Tools
 {
     /// <summary>
     /// Text commands for the developer console. Pure logic over a GameClock so it is testable.
-    /// time HH[:MM] | day N | date YEAR SEASON DAY | next | speed X | pause | resume | help
+    /// time HH[:MM] | sleep | skip H[:M] | day N | date YEAR SEASON DAY | next | speed X | pause | resume | help
     /// Day numbers are 1-based days of the season; day N keeps the current season and year.
     /// </summary>
     public static class DevCommands
@@ -17,6 +17,8 @@ namespace HM.Tools
             "day N          jump to day N (1-30) of this season\n" +
             "date Y S D     jump to year Y, season (spring|summer|fall|winter), day D\n" +
             "next           jump to 06:00 of the next day\n" +
+            "sleep          go to bed now (wakes 06:00, rolls the day over)\n" +
+            "skip H[:M]     advance the clock by H hours (and M minutes), firing day changes\n" +
             "speed X        time scale (0..100)\n" +
             "pause|resume   stop or restart the clock";
 
@@ -34,6 +36,14 @@ namespace HM.Tools
                     case "resume": clock.Paused = false; return "running";
                     case "next":
                         clock.JumpTo((clock.DayIndex + 1) * (double)GameClock.MinutesPerDay + 6 * 60);
+                        return Status(clock);
+                    case "sleep":
+                        DayCycle.Sleep(clock);
+                        return Status(clock);
+                    case "skip":
+                        if (p.Length < 2 || !TryParseTime(p[1], out double delta, 10000) || delta <= 0)
+                            return "usage: skip H[:M] (advance, e.g. skip 5 or skip 0:30)";
+                        clock.JumpTo(clock.TotalMinutes + delta);
                         return Status(clock);
                     case "time":
                         if (p.Length < 2 || !TryParseTime(p[1], out double minutes)) return "usage: time HH[:MM]";
@@ -67,14 +77,14 @@ namespace HM.Tools
             return Status(clock);
         }
 
-        public static bool TryParseTime(string s, out double minutes)
+        public static bool TryParseTime(string s, out double minutes, int maxHours = 23)
         {
             minutes = 0;
             var parts = s.Split(':');
             if (parts.Length > 2 || !int.TryParse(parts[0], out int h)) return false;
             int m = 0;
             if (parts.Length == 2 && !int.TryParse(parts[1], out m)) return false;
-            if (h < 0 || h > 23 || m < 0 || m > 59) return false;
+            if (h < 0 || h > maxHours || m < 0 || m > 59) return false;
             minutes = h * 60 + m;
             return true;
         }
