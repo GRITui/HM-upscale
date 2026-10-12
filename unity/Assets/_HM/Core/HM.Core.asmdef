@@ -2,7 +2,8 @@
   "name": "HM.Core",
   "rootNamespace": "HM.Core",
   "references": [
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.ugui"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -1,7 +1,7 @@
 {
   "name": "HM.Gameplay",
   "rootNamespace": "HM.Gameplay",
-  "references": ["HM.Core","HM.Farming","HM.Dialogue","HM.Characters","Unity.InputSystem"],
+  "references": ["HM.Core","HM.Farming","HM.Dialogue","HM.Characters","Unity.InputSystem","Unity.ugui"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
