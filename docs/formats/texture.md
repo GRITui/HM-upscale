@@ -31,9 +31,14 @@ Payload is RLE (compression.md) or stored.
 - Font_all.tex (seg007): 16-colour CLUT, chunk 1 stored at (960,0,63,252), chunk 2
   RLE at (896,0,63,252); 4bpp glyph sheets, 252 x 252 pixels each. Glyph cell layout
   is NOT yet worked out.
-- gf.bin (seg000): same magic and a 16-colour CLUT at (896,251), but the chunk list
-  does not follow the simple layout after the second chunk (sizes become nonsense), and
-  the file is 64 MB. Probably a nested container. Unsolved.
+- gf.bin (seg000): SOLVED container. Images use the same 0x100D header but the header
+  count n is items = chunks + group headers. A group header (6 u16: clut_bytes, 0x0600,
+  clut_x, clut_y, ncolors, 1) starts a new CLUT followed by ncolors u16; chunks after it
+  belong to that group. Items are 2-byte aligned (1 pad byte after odd payloads); a u16 0
+  is skipped. Example: image at 0xb9800 has n=166 = 101 chunks + 65 groups. The image ends
+  at the next sector. gf.bin itself is indexed by a 261x4 u32 table (see gf.py): column 1
+  is the image, columns 0/2/3 are scene data (unknown structs), plus a tail of res_0e
+  sprite tables (sprite.md). Parser: decompress.parse_image (returns "groups").
 
 ## Unknown
 

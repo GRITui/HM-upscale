@@ -10,7 +10,7 @@ Output of the first full `python -m hmconv batch` run (0 errors, 714 manifest as
 | BGM tracks (DATA001 1-51 ATRAC3plus) | done | 51 / 51 | ogg via ffmpeg |
 | DATA001 entry 0 (VAG bank) | done | 103 / 103 | split and decoded, ogg |
 | DATA001 audio total | done | 52 / 52 entries | 51 tracks + SE bank |
-| gf.bin graphics (64 MB) | blocked | 0 / unknown | chunk list layout unsolved |
+| gf.bin graphics (64 MB) | partial | images parse (group-aware) | cols 0,2,3 of index table undecoded |
 | Sprites (res_0e) | blocked | 0 / unknown | format partial |
 | Maps | blocked | 0 / unknown | format partial |
 | Text and tables | blocked | 0 / unknown | format partial |

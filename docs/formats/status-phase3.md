@@ -10,6 +10,14 @@ animation or vertex-skinning code; scene state is built from sprite resources
 (res_0e, FUN_000086ec) and tile maps. There is no model, skeleton or bone animation to
 convert. Sprites animate by frame sequences.
 
+Round-3 re-check of gf.bin (confirmed, no 3D): all 255 table rows have a 0x100D 4/8bpp
+CLUT image in column 1; the engine emits only GP0 0x64 textured rectangles and
+ordering-table links (FUN_00009408), no GTE/polygon packets; the module imports no
+GU/GUM/VFPU 3D API; res_0e entries are 2D part tables (tile u,v,w,h + x/y offsets +
+frame sequences). The remaining gf.bin columns (0, 2, 3) are not yet decoded, but
+col 2 reads as RGB555 palettes and col 3 is a byte-identical shared 0x12800 blob, so
+nothing there is a per-scene mesh.
+
 ## Image data: PARTIAL
 
 See texture.md and compression.md. face.bin portraits fully decodable.
