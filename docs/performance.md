@@ -43,3 +43,29 @@ max 22.40 ms, 17 frames over budget, 17 draw calls, 6 SetPass, about 3.9 k
 triangles. The first frames include a multi-second shader warm-up spike
 (max 3.4 s), so exclude the first interval when judging. This scene is
 trivial; it proves the harness, not the budget.
+
+## Capture mode (Phase 6)
+
+`PerfCapture` (HM.Core) records a fixed window after a warmup that is
+excluded from the statistics:
+
+```
+"HM Upscale" -hm-perf-capture 30 -hm-perf-warmup 5 -hm-perf-out perf.json -hm-perf-note "idle, load 0.8"
+```
+
+`-hm-perf-capture SECONDS` enables it, `-hm-perf-warmup` defaults to 5 s,
+`-hm-perf-out` is the JSON path (use an ignored directory) and
+`-hm-perf-note` is copied into the JSON so the run conditions travel with the
+numbers. The JSON holds frames, avg/p95/p99/max ms, avg fps, over-budget
+frames, draw calls, SetPass calls, triangles, and for the warmup its frame
+count, its worst frame and how many warmup frames exceeded 100 ms. The
+statistics are unit tested (PerfCaptureSessionTests); the player-side wiring
+has been compiled but not yet run in a build.
+
+No fps figure is claimed for the Phase 6 slice: the machine was not idle when
+this was written (load average above 3), so a number would not be honest.
+Run the capture on an idle machine and record `uptime` in the note.
+
+The 3.4 s first-frame spike measured above is a shader warm-up. A
+ShaderVariantCollection prewarm is the intended fix but has not been
+generated or measured yet.

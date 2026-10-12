@@ -20,3 +20,9 @@ is the observation still to be made in the original game; until then the rule st
 | Day rollover drives farm | existing GameClock.DayChanged | high (own code) | ClockBridgeAdvancesDayOnRollover, OneDayEndToEnd | n/a |
 | Dialogue lines, speaker, face id | text.md (face id high) / original lines | high (format) | DialogueTests.StartsAtGreeting... | compare face ids per speaker |
 | Choice gating and flag set/test | placeholder | low | RequireFlagHidesChoice, AdviceSetsFlagAndBranchesOnIt | observe a flag-gated choice |
+| Wake hour after sleeping | placeholder (DayCycle.WakeHour=6) | low | DayCycleTests, SleepAdvancesCropsTests | note wake time |
+| Forced sleep window 02:00 to 06:00 | placeholder (DayCycle.ForcedSleepHour=2) | low | ForcedSleepWindow, SleepingAfterMidnightForcesWakeSameDay | stay up past midnight |
+| Sleep before midnight rolls the day, after midnight does not | own design | high (own code) | SleepBeforeMidnightWakes..., SleepAfterMidnightWakes... | sleep at 22:00 and 01:00 |
+| Day tint and sun path | own design | high (own code) | SunIsBrighterAtNoonThanAtNight | compare lighting over a day |
+| Farm slice loop (till, plant, water, sleep, grow, talk) | rules.json + placeholders | low | PlantWaterSleepGrowAndTalkToNpc | play one in-game day |
+| Starting seeds in the slice | placeholder (FarmWorld.startingSeeds=4) | low | n/a | start a new game |
