@@ -60,6 +60,8 @@ namespace HM.Core
         public bool InWarmup => elapsed < warmup;
         public bool Done => elapsed >= warmup + duration;
         public int Frames => stats.Count;
+        /// <summary>Approximate frame count of the capture window, from frames seen so far (elapsed/avg).</summary>
+        public int TargetFrames => stats.Count > 0 && stats.Average > 0f ? (int)(duration * 1000f / stats.Average) : int.MaxValue;
         public int WarmupFrames => warmupFrames;
 
         /// <summary>Add one frame. Counters are the render stats for that frame (0 when unavailable).</summary>
@@ -126,6 +128,9 @@ namespace HM.Core
     {
         PerfCaptureSession session;
         string outPath, note;
+        bool skipDay, skipped, forceRender;
+        RenderTexture rt;
+        Camera cam;
         ProfilerRecorder drawCalls, triangles, setPass;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -140,6 +145,10 @@ namespace HM.Core
             var c = go.AddComponent<PerfCapture>();
             c.session = new PerfCaptureSession(warmup, seconds);
             c.note = ReadString(args, "-hm-perf-note", "");
+            c.skipDay = Array.IndexOf(args, "-hm-perf-skipday") >= 0;
+            // -hm-perf-render: a -batchmode player never presents a frame, so cameras do no work. This renders the
+            // main camera into an offscreen 1280x720 target every frame so the GPU/CPU render cost is in the numbers.
+            c.forceRender = Array.IndexOf(args, "-hm-perf-render") >= 0;
             c.outPath = ReadString(args, "-hm-perf-out", Path.Combine(Application.persistentDataPath, "perf-capture.json"));
         }
 
@@ -162,7 +171,17 @@ namespace HM.Core
             setPass = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
         }
 
-        void OnDisable() { drawCalls.Dispose(); triangles.Dispose(); setPass.Dispose(); }
+        void OnDisable() { drawCalls.Dispose(); triangles.Dispose(); setPass.Dispose(); if (rt != null) rt.Release(); }
+
+        void LateUpdate()
+        {
+            if (!forceRender || session == null) return;
+            if (cam == null) cam = Camera.main;
+            if (cam == null) return;
+            if (rt == null) { rt = new RenderTexture(1280, 720, 24, RenderTextureFormat.ARGB32); rt.Create(); }
+            cam.targetTexture = rt;
+            cam.Render();
+        }
 
         void Update()
         {
@@ -171,6 +190,14 @@ namespace HM.Core
                 drawCalls.Valid ? (int)drawCalls.LastValue : 0,
                 setPass.Valid ? (int)setPass.LastValue : 0,
                 triangles.Valid ? triangles.LastValue : 0);
+            // -hm-perf-skipday: advance the game clock one full day halfway through the capture window so
+            // the day change, lighting and HUD refresh are inside the measured frames.
+            if (skipDay && !skipped && !session.InWarmup && session.Frames >= session.TargetFrames / 2)
+            {
+                skipped = true;
+                var clock = GameClockBehaviour.Instance != null ? GameClockBehaviour.Instance.Clock : null;
+                if (clock != null) { clock.JumpTo(clock.TotalMinutes + GameClock.MinutesPerDay); Debug.Log("[HM-PERF] skipped one day"); }
+            }
             if (!session.Done) return;
 
             var r = session.Result();
