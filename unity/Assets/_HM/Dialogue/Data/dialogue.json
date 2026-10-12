@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "source": "placeholder",
+  "start": "mira_greet",
+  "nodes": [
+    { "id": "mira_greet", "speaker": "Mira", "face": 1, "text": "Morning. The soil looks ready for seeds.",
+      "choices": [
+        { "text": "Any advice?", "next": "mira_advice" },
+        { "text": "I already planted.", "next": "mira_planted", "requireFlag": "planted_today" },
+        { "text": "See you.", "next": "" }
+      ] },
+    { "id": "mira_advice", "speaker": "Mira", "face": 2, "text": "Water every day or nothing grows.",
+      "setFlags": ["got_advice"], "next": "mira_check" },
+    { "id": "mira_check", "speaker": "Mira", "face": 1, "text": "You listened. Good.",
+      "ifFlag": "got_advice", "ifNext": "mira_bye", "next": "" },
+    { "id": "mira_planted", "speaker": "Mira", "face": 3, "text": "Nice work. Do not forget the water.", "next": "mira_bye" },
+    { "id": "mira_bye", "speaker": "Mira", "face": 1, "text": "Take care out there.", "next": "" }
+  ]
+}

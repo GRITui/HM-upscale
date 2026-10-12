@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "startingGold": { "value": 300, "source": "placeholder", "confidence": "low" },
+  "maxStamina": { "value": 100, "source": "placeholder", "confidence": "low" },
+  "tools": [
+    { "id": "hoe",         "staminaCost": { "value": 4, "source": "placeholder", "confidence": "low" } },
+    { "id": "wateringCan", "staminaCost": { "value": 2, "source": "placeholder", "confidence": "low" } },
+    { "id": "seedBag",     "staminaCost": { "value": 1, "source": "placeholder", "confidence": "low" } },
+    { "id": "sickle",      "staminaCost": { "value": 3, "source": "placeholder", "confidence": "low" } }
+  ],
+  "crops": [
+    {
+      "id": "sprout_beet",
+      "growDays":  { "value": 4,  "source": "placeholder", "confidence": "low" },
+      "seedPrice": { "value": 20, "source": "placeholder", "confidence": "low" },
+      "sellPrice": { "value": 60, "source": "placeholder", "confidence": "low" }
+    },
+    {
+      "id": "plain_corn",
+      "growDays":  { "value": 8,  "source": "placeholder", "confidence": "low" },
+      "seedPrice": { "value": 50, "source": "placeholder", "confidence": "low" },
+      "sellPrice": { "value": 120, "source": "placeholder", "confidence": "low" }
+    }
+  ]
+}

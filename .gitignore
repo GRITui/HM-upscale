@@ -32,3 +32,7 @@ node_modules/
 # Local env
 .env
 *.env
+
+# Local rule overlay (extracted values; never commit)
+unity/Assets/_HM/Farming/Data/rules.local.json
+unity/Assets/_HM/Farming/Data/rules.local.json.meta
