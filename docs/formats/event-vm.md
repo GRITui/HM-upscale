@@ -28,13 +28,41 @@ No game text or data is in the repo; converted JSON is read from a git-ignored l
   14 day, 15 map, 21..23 player x/y/z, 26 minute. Actor `0x29` player, `0x2A` all NPCs.
 - Op 2 dialog: channel 0..4, entry = message id (or variable when `p4 != 0`), result variable `p3`.
 - Implemented ops: 0-7, 9, 12-17, 19-24, 26-32, 34-38, 42, 43, 46, 47, 51-53, 55, 60, 61, 64, 66,
-  70, 71, 76, 78, 79, 87, 88, 91, 94, 97, 103. Everything else goes through `Unimpl`: counted in
+  70, 71, 76, 78, 87, 88, 91, 94, 97, 103, plus the game-logic ops below. Everything else goes through `Unimpl`: counted in
   `EventState.Unhandled`, reported to `IEventHost.Unimplemented`, logged in `ScriptVM.Log`, and
   treated as done. Nothing crashes on unknown ops.
 
+## Region event id -> script (resolved, medium-high confidence)
+Every converted map carries exactly one resident script (loaded by FUN_00058da0 into the RAM image,
+run from command 0, polled every frame). The event-trigger table (0x24-byte entries, walked by
+FUN_00053ee8) checks time, place, flags and FUN_00054354, then queues `id & 0x3ff` through
+FUN_0003b890 and sets flag `(id & 0x3ff) + 0xfb` as "seen". That id is a MAP id: the game loads
+that map's script and runs it from command 0. Op 50 queues an event the same way (`queue_event`).
+The JSON `block` field is a block index inside the map file, so the old `block == eventId` default
+was a coincidence. `EventRunner.EventMapLoader(id)` returns the target map's `EventFile`; the default
+resolver takes `scripts[0]` of a single-script file, and only falls back to the legacy block/index
+match for multi-script files (tests).
+
+## Game-logic ops (decoded from the interpreter handlers)
+Ops with engine-only effects (camera, emote, actor motion, scroll, BGM, ui wait, big-switch cases
+without a pure-state effect) call `IEventHost.Engine(op, p1..p4, begin, state)`; returning false
+keeps the op waiting. `EngineId` names the values read through `IEventHost.EngineValue`. Pure-state
+ops run natively on `EventState.Bank` (mode, player, scratch, engine words), `Pairs` (op 100),
+`Pending` (op 11) and flags.
+- 56 mode==3 check; 69 save_bits (test/set/clear mask on the 32-bit mode word, or the 16-bit player
+  word when p4 != 0); 73 actor_pos_to_vars; 74 event_pos_to_vars; 100 register_pair (5 slots, -1 empty);
+  104 actor_move_rel (offsets doubled); 84 sets flags 4, 5, 0xb0; 105 gate on flags 0x129 / 0x25.
+- 10/11 camera_release and sleep_trigger; 40 animal state tests; 54 slot_offset; 57/58 item
+  preference and item pair to var; 59 state compare; 99 mode wait.
+- 79 stores the return address (next command index, or the on_wait byte if set) into a variable; 80
+  rewrites its own on_done from a variable (computed jump). The VM keeps the override in a per-run
+  table and never mutates the shared command array. The earlier "script index" reading was wrong.
+- 81 big switch: cases 6, 7, 9, 0xb, 0x12, 0x13, 0x16, 0x17, 0x19, 0x1b are native; the rest go
+  to the host. Still unknown in detail: the engine-side effect of 8, 25, 62, 63, 72, 77, 82, 83 and
+  most of 81, which are delegated rather than emulated.
+
 ## Assumptions (not confirmed by the decode)
-- Region event id -> script: the mapping is undocumented. Default resolver picks the script whose
-  `block == eventId`, else the script at that index. `EventRunner.Resolver` is pluggable.
+- Frame timer, clock and dialogue assumptions below remain unconfirmed.
 - Frame timer (op 3) counts `p1` frames, then completes on the following frame.
 - Op 76 with `p3 == 0` waits a relative duration from `TotalMinutes()` at first execution; with
   `p3 != 0` it waits for an absolute clock time.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HM.Events
 {
-    /// <summary>Picks the script to run for a region event id. Default: block number match, then index.</summary>
+    /// <summary>Picks the script to run for a region event id (a map id; see EventRunner.DefaultResolver).</summary>
     public delegate EventScript ScriptResolver(EventFile file, int eventId, out int scriptIndex);
 
     /// <summary>
@@ -44,10 +44,23 @@ namespace HM.Events
             queue.Clear();
         }
 
+        /// <summary>
+        /// Resolves the event file that holds an event's script. In the original a region event id is a
+        /// map id: the game loads that map's single resident script image and runs it from command 0
+        /// (FUN_00058da0). Null means the current <see cref="File"/> is used.
+        /// </summary>
+        public Func<int, EventFile> EventMapLoader;
+
+        /// <summary>
+        /// Default resolver: the event id names a map, whose file holds exactly one script (all 439
+        /// converted maps do). Pass the target map's file; a file with several scripts falls back to
+        /// matching the block number, then the index.
+        /// </summary>
         public static EventScript DefaultResolver(EventFile file, int eventId, out int scriptIndex)
         {
             scriptIndex = -1;
             if (file?.scripts == null) return null;
+            if (file.scripts.Length == 1) { scriptIndex = 0; return file.scripts[0]; }
             for (int i = 0; i < file.scripts.Length; i++)
                 if (file.scripts[i].block == eventId) { scriptIndex = i; return file.scripts[i]; }
             if (eventId >= 0 && eventId < file.scripts.Length) { scriptIndex = eventId; return file.scripts[eventId]; }
@@ -70,7 +83,8 @@ namespace HM.Events
 
         bool Start(int eventId)
         {
-            var s = Resolver(File, eventId, out int idx);
+            var f = EventMapLoader?.Invoke(eventId) ?? File;
+            var s = Resolver(f, eventId, out int idx);
             if (s == null) return false;
             Active = new ScriptVM(s, State, host, idx);
             activeEvent = eventId;

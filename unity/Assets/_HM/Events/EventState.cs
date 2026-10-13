@@ -17,6 +17,34 @@ namespace HM.Events
         public readonly int[,] Slots = new int[SlotCount, 3];     // y, x, z
         public readonly bool[] SlotSet = new bool[SlotCount];
 
+        /// <summary>
+        /// Engine bit-field words that scripts read and modify (ops 10, 11, 69, 81, 99). Index with the
+        /// <c>Bank*</c> constants; the comments give the original globals.
+        /// </summary>
+        public const int BankMode = 0;        // 0x1aef1c, 32-bit mode word (bit 0x800000 = scripted, 2 = camera busy, 8 = mode wait)
+        public const int BankPlayer = 1;      // 0x1aeee6, 16-bit player word
+        public const int BankScratch = 2;     // 0x1ae76e, op 81 case 6 bits
+        public const int BankEngine = 3;      // 0x1ae1e0
+        public const int BankEngine2 = 4;     // 0x1aeea8
+        public const int BankUi = 5;          // 0x1ae138
+        public const int BankToken = 6;       // 0x1b36c0, op 81 case 0x12
+        public const int BankCounter = 7;     // 0x1aef22, op 81 case 0x16 (max 15)
+        public const int BankCount = 8;
+        public readonly int[] Bank = new int[BankCount];
+
+        /// <summary>Pending sleep-trigger id (0x1aeed2, short); -1 = none. Set by the world, consumed by op 11.</summary>
+        public int Pending = -1;
+
+        /// <summary>Op 100 registry: five (key, value) pairs, empty key = -1.</summary>
+        public const int PairCount = 5;
+        public readonly int[,] Pairs = NewPairs();
+        static int[,] NewPairs()
+        {
+            var p = new int[PairCount, 2];
+            for (int i = 0; i < PairCount; i++) p[i, 0] = -1;
+            return p;
+        }
+
         /// <summary>Opcodes that ran without a real implementation, with hit counts.</summary>
         public readonly Dictionary<int, int> Unhandled = new Dictionary<int, int>();
 

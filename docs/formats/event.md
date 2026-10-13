@@ -25,7 +25,8 @@ FUN_00093c2c (returns row + 1). Only the first 14 rows are scanned. Parsed by to
 ## Event condition predicate
 FUN_00054354: switch over about 115 event ids returning 1 when the event may fire. Inputs are NPC
 affection values (compared with thresholds 20000..60000 depending on year), NPC location, flags
-and date. The region event id in scene headers (docs/formats/map.md, scene.py) indexes this.
+and date. It gates the trigger; the queued id is a map id whose single script then runs (see
+event-vm.md, "Region event id -> script").
 
 ## Map-script commands (interpreter FUN_000596e0)
 A script block (map.py block kind `script`) is an array of 16-byte commands, copied to RAM (max 206).

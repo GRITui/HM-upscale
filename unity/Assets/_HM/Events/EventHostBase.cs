@@ -39,6 +39,13 @@ namespace HM.Events
         public virtual void SetInputLock(bool locked) { }
         public virtual int Random(int range) => 0;
         public virtual void ScriptEnded(int variant, int flag, int cleanupBits) { }
+        public virtual bool GetActorPos(int actor, out int y, out int x, out int z) { y = 0; x = 0; z = 0; return false; }
+        public virtual void OffsetActorPos(int actor, int dy, int dx, int dz) { }
+        public virtual int DirectionBetween(int fromActor, int toActor) => 0;
+        public virtual int ItemPreference(int item, int npc) => 0;
+        public virtual int AnimalState(int id) => 0;
+        public virtual int EngineValue(int id) => 0;
+        public virtual bool Engine(int op, int p1, int p2, int p3, int p4, bool begin, EventState state) => true;
         public virtual void Unimplemented(int op, string name, string confidence) { }
     }
 }
