@@ -11,11 +11,15 @@ namespace HM.World
         public readonly Dictionary<string, Transform> Spawns = new Dictionary<string, Transform>();
         public int PlaceholderCount;
         public int ModelCount;
+        public int RegionCount;
+        public int WalkableCells;
     }
 
     /// <summary>Builds an area from a MapData. Missing models become placeholder primitives (never an exception).</summary>
     public static class MapLoader
     {
+        public const float RegionHeight = 2f;
+
         public static BuiltMap Build(string json, IModelSource models, Material terrainMaterial = null, Material placeholderMaterial = null)
             => Build(MapData.Parse(json), models, terrainMaterial, placeholderMaterial);
 
@@ -24,7 +28,12 @@ namespace HM.World
             var built = new BuiltMap { Data = data, Root = new GameObject("Map " + data.id) };
             var root = built.Root.transform;
 
-            if (data.terrain != null) BuildTerrain(data.terrain, root, terrainMaterial);
+            if (data.terrain != null && data.terrain.IsRaw)
+            {
+                WalkGrid.Build(data.terrain, root, terrainMaterial);
+                built.WalkableCells = WalkGrid.WalkableCellCount(data.terrain);
+            }
+            else if (data.terrain != null) BuildTerrain(data.terrain, root, terrainMaterial);
 
             var objects = new GameObject("Objects"); objects.transform.SetParent(root, false);
             foreach (var o in data.objects)
@@ -61,6 +70,31 @@ namespace HM.World
                 t.localPosition = MapData.V3(sp.position);
                 t.localRotation = Quaternion.Euler(0f, sp.rotationY, 0f);
                 built.Spawns[sp.name ?? "default"] = t;
+            }
+
+            if (data.terrain != null && data.terrain.IsRaw && !built.Spawns.ContainsKey("default") && WalkGrid.MostOpen(data.terrain, 5, out var open))
+            {
+                var t = new GameObject("Spawn default").transform;
+                t.SetParent(spawns.transform, false);
+                t.localPosition = open;
+                built.Spawns["default"] = t;
+            }
+
+            var regions = new GameObject("Regions"); regions.transform.SetParent(root, false);
+            foreach (var r in data.regions)
+            {
+                if (r.min == null || r.max == null || r.min.Length < 2 || r.max.Length < 2) continue;
+                var a = FarmCoords.ToWorld(r.min[0], 0, r.min[1]); var b = FarmCoords.ToWorld(r.max[0], 0, r.max[1]);
+                var go = new GameObject("Region " + r.index);
+                go.transform.SetParent(regions.transform, false);
+                go.transform.localPosition = (a + b) * 0.5f + new Vector3(0, RegionHeight * 0.5f, 0);
+                var box = go.AddComponent<BoxCollider>();
+                box.isTrigger = true;
+                box.size = new Vector3(Mathf.Abs(a.x - b.x), RegionHeight, Mathf.Abs(a.z - b.z));
+                var trig = go.AddComponent<MapRegionTrigger>();
+                trig.index = r.index; trig.flags = r.flags; trig.type = r.type; trig.eventId = r.@event;
+                trig.facing = r.facing; trig.condition = r.condition; trig.arrival = FarmCoords.ToWorld(r.arrival);
+                built.RegionCount++;
             }
 
             var colliders = new GameObject("Colliders"); colliders.transform.SetParent(root, false);

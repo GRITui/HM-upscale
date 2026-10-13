@@ -4,7 +4,8 @@
   "references": [
     "HM.Core",
     "Unity.Addressables",
-    "Unity.ResourceManager"
+    "Unity.ResourceManager",
+    "glTFast"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
