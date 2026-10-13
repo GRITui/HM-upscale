@@ -29,10 +29,12 @@ namespace HM.Tests.Farming
             }
         }
 
-        [Test] public void CommittedRulesContainNoExtractedValues()
+        [Test] public void CommittedRulesAreNumericOnly()
         {
+            // Small numeric rule values (gold, prices, growth days) may be committed;
+            // game text and assets may not (repo data policy).
             var json = File.ReadAllText(Path.Combine(Application.dataPath, "_HM/Farming/Data/rules.json"));
-            StringAssert.DoesNotContain("\"extracted\"", json);
+            StringAssert.DoesNotContain("\"text\"", json);
         }
 
         [Test] public void OverlayOverridesAndTagsSource()
