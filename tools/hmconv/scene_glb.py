@@ -4,7 +4,7 @@
 Output goes under assets/hm-converted/ (git-ignored); never commit it. Geometry only:
 textures are not decoded here, each face keeps its raw tpage/clut in the material name
 ("tpage_<n>") and in node extras. Units: game units * SCALE (0.01, an assumption, the
-real world scale is unconfirmed). Axes: game Y is down, so glTF Y = -Y; the games's
+real world scale is unconfirmed). Axes: see to_gltf(). The game's
 winding is unknown so materials are double sided.
 Usage: scene_glb.py <hmpsp.prx.elf> <seg000.bin> <row> <out.glb>
 """
@@ -14,6 +14,18 @@ import scene as sc
 import scene_mesh as mm
 
 SCALE = 0.01
+
+
+def to_gltf(x, y, z):
+    """Game (raw) coordinates to glTF coordinates; the one place where handedness is converted.
+
+    The raw frame is right handed: x right, y down, z into the screen (d-pad up = +z, right = +x). glTF is
+    right handed with y up, and glTFast then negates x to reach Unity (left handed, x right, y up, z forward).
+    To land on Unity (x, -y, z) the file must hold (-x, -y, z): a 180 degree rotation about z, which has
+    determinant +1, so triangle winding is preserved and nothing is mirrored. Writing (x, -y, z) instead
+    (determinant -1) mirrors the scene in x once glTFast imports it. Unity side: FarmCoords.ToWorld.
+    """
+    return (-x * SCALE, -y * SCALE, z * SCALE)
 
 
 def _pad(b, fill=b"\0"):
@@ -48,7 +60,7 @@ def _mesh(buf, model, materials):
             for pr, t in tris:
                 for i in t:
                     x, y, z = part["vertices"][i]
-                    pos.append((x * SCALE, -y * SCALE, z * SCALE))
+                    pos.append(to_gltf(x, y, z))
                     k = pr["indices"].index(i)
                     c = pr["colors"][k if len(pr["colors"]) > 1 else 0]
                     col.append(tuple(min(1.0, v / 128.0) for v in c) + (1.0,))
@@ -92,7 +104,7 @@ def build_glb(b, parsed=None):
             continue
         x, y, z = inst["shorts"][:3]
         nodes.append({"name": "instance_%d" % inst["index"], "mesh": mesh_for(inst["model_offsets"][0]),
-                      "translation": [x * SCALE, -y * SCALE, z * SCALE],
+                      "translation": list(to_gltf(x, y, z)),
                       "extras": {"flags": inst["flags"], "model_offsets": inst["model_offsets"]}})
     doc = {"asset": {"version": "2.0", "generator": "hmconv scene_glb"},
            "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,

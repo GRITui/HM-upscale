@@ -27,8 +27,7 @@ derive from the user's own disc image and are git-ignored. They must never be co
 
 ## Assumptions and checks
 
-All behind `FarmCoords`: `DecompiledUnitsToMetres = 0.005` (estimate, docs/baseline.md) times `WorldScale = 1.5` (a user design decision, not a measurement) gives `UnitsToMetres = 0.0075`, `MirrorX = true` (glTFast negates X on
-import and the converter writes y = -y), Y down in raw data.
+All behind `FarmCoords`: `DecompiledUnitsToMetres = 0.005` (estimate, docs/baseline.md) times `WorldScale = 1.5` (a user design decision, not a measurement) gives `UnitsToMetres = 0.0075`, `MirrorX = false` (the single documented handedness point: glTFast negates X on import, so the converter writes (-x, -y, z), a proper rotation; no runtime mirror remains; `XSign`/`ToRaw` derive from it), Y down in raw data.
 
 Check performed: PlayMode `FarmOverlayTests.RealFarmWalkGridContainsThePlayer` renders the
 GLB, then the collision floor raised 5 cm over it (set `HM_SHOT_DIR` to save

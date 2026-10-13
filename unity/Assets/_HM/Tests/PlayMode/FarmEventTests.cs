@@ -99,7 +99,7 @@ namespace HM.Tests.PlayMode
             yield return Frames(6);
             Assert.IsFalse(dir.Runner.Busy, "script finished");
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
-            Assert.AreEqual(-3.75f, player.transform.position.x, 0.03f, "x mirrored, 0.0075 m per unit (1.5x world)");
+            Assert.AreEqual(3.75f, player.transform.position.x, 0.03f, "raw +x is world +x, 0.0075 m per unit (1.5x world)");
             Assert.AreEqual(2.25f, player.transform.position.z, 0.03f);
             Assert.IsFalse(dir.InputLocked);
         }
@@ -161,12 +161,12 @@ namespace HM.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator MoveActorHonoursMirroredX()
+        public IEnumerator MoveActorRawPlusXIsWorldPlusX()
         {
             Build(7, Move(0, 0x29, 1, 300), C(19, 0x31, 0, 1, 0));
             yield return Sim(1.5f);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
-            Assert.AreEqual(-2.25f, player.transform.position.x, 0.03f, "raw +x is world -x");
+            Assert.AreEqual(2.25f, player.transform.position.x, 0.03f, "raw +x is world +x");
         }
 
         [Test]

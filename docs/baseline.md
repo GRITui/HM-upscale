@@ -107,10 +107,12 @@ about 7495, -11430).
 **Unit scale.** The engine has no metre unit; it is an estimate. Anchors: the 48-unit collision probe radius,
 100-unit cells, and the sprite height against the 0.1 px per unit projection all point to about 0.005 m per unit
 (confidence medium). At 0.005 the walk is 6.15 m/s and run is 10.95 m/s. That is fast for a person but the world is
-a chibi diorama where a 2747-unit yard is about 14 m wide. Mirroring: the raw frame is right handed (x right, y down,
-z into the screen); the converter writes (x, -y, z) and glTFast negates X, so the imported GLB is x-mirrored
-relative to the game. Unity keeps `FarmCoords.MirrorX = true` so the player matches the imported mesh; the on-screen
-scene is therefore mirrored versus the original until the converter or importer is fixed.
+a chibi diorama where a 2747-unit yard is about 14 m wide. Handedness: the raw frame is right handed (x right, y down,
+z into the screen; d-pad up = +z, right = +x). glTF is right handed and glTFast negates X on import, so the converter
+writes (-x, -y, z) (a proper rotation, determinant +1, winding preserved; `scene_glb.to_gltf`) and Unity receives
+(x, -y, z). `FarmCoords.MirrorX` is therefore false: the one conversion lives in the converter, the mesh, collision
+grid, triggers, spawns, sprites and camera yaw all use raw x as world +x, and the on-screen scene is unmirrored
+versus the original. Regenerate any GLB made before this change.
 
 **Press-duration caveat.** The debugger press `duration` is not an exact frame
 count, and menus or events swallow the first input. Use slopes across several
@@ -119,7 +121,7 @@ via `input.buttons.send` only moves if re-sent about every 30 ms.
 
 ### Retuned in Unity
 
-- `FarmCoords.DecompiledUnitsToMetres` 0.005 (the estimate), `MirrorX` unchanged.
+- `FarmCoords.DecompiledUnitsToMetres` 0.005 (the estimate), `MirrorX` false (see Handedness).
 - DESIGN DECISION (user approved, not a measurement): the farm is built 1.5x larger than the decompiled proportions so it feels like a place rather than a 14 m yard. `FarmCoords.WorldScale = 1.5`, so `UnitsToMetres = 0.0075` (a 2747-unit yard is about 20.6 m). Terrain, collision, regions, spawns, NPC and actor positions, the GLB (`GlbScale` 0.75), sprites (pixels per unit x1.5, so characters stay in proportion to doors and furniture) and the camera follow distance (20 to 30 m, same framing) all derive from it.
 - Speeds stay in the decompiled metres: `PlayerMover` walk 6.15 m/s, run 10.95 m/s (73/41 of walk), `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.005 = 6.15 m/s. Crossing the larger world therefore takes 1.5x longer. Game clock, event timing and rules are unchanged.
 - Game clock stays at 2 minutes per real second (matches the measurement).
@@ -137,7 +139,7 @@ in a 16:9 frame; the captured window letterboxes it.
 
 ## Unanswered
 
-- The metre scale (0.005 is an estimate; the shipped world is 1.5x it by design) and a mirror-faithful import.
+- The metre scale (0.005 is an estimate; the shipped world is 1.5x it by design) (the import is now unmirrored).
 - Run button identity, and the forced-sleep location.
 - Camera yaw, pitch and FOV for the farm map (only the look-at structure and H = 1000 are known).
 - Player position address confirmation in the emulator (one spot-check pending).

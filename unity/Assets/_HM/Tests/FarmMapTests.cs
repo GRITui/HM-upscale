@@ -131,9 +131,28 @@ namespace HM.Tests
         public void CoordinateMappingIsScaledAndYDown()
         {
             var p = FarmCoords.ToWorld(100, 200, 300);
-            Assert.AreEqual(1f * (FarmCoords.MirrorX ? -1f : 1f) * (FarmCoords.UnitsToMetres * 100f), p.x, 1e-5f);
+            Assert.AreEqual(1f * FarmCoords.XSign * (FarmCoords.UnitsToMetres * 100f), p.x, 1e-5f);
             Assert.AreEqual(-2f * (FarmCoords.UnitsToMetres * 100f), p.y, 1e-5f);
             Assert.AreEqual(3f * (FarmCoords.UnitsToMetres * 100f), p.z, 1e-5f);
+        }
+
+        [Test]
+        public void RawPlusXIsWorldPlusX()
+        {
+            // The GLB is converted once at the source (scene_glb.to_gltf), so no runtime mirror remains.
+            Assert.IsFalse(FarmCoords.MirrorX);
+            Assert.AreEqual(1f, FarmCoords.XSign);
+            Assert.Greater(FarmCoords.ToWorld(100, 0, 0).x, 0f);
+            Assert.Greater(FarmCoords.ToWorld(0, 0, 100).z, 0f);
+        }
+
+        [Test]
+        public void ToRawInvertsToWorld()
+        {
+            var w = FarmCoords.ToWorld(-1234, 0, 567);
+            FarmCoords.ToRaw(w, out var x, out var z);
+            Assert.AreEqual(-1234f, x, 1e-2f);
+            Assert.AreEqual(567f, z, 1e-2f);
         }
 
         [Test]

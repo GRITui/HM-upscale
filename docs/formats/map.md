@@ -100,7 +100,7 @@ model slots (idle/state variants).
 ### Still unknown
 
 World scale (0.005 m per unit is the decompiled estimate and the shipped world is 1.5x it by design, 0.0075, see docs/baseline.md and ADR 0007; player coordinates are the scene frame; the farm overlay of ADR 0007 matches the GLB
-visually under it, with scale and handedness isolated in `FarmCoords`), handedness, texture decode (tpage and clut
+visually under it, with scale and handedness isolated in `FarmCoords`; handedness is resolved: raw is right handed and the converter writes (-x, -y, z) so glTFast's X negation yields an unmirrored scene), texture decode (tpage and clut
 to bank mapping), the meaning of bit25 and face flag bits 0x4000/0x2000/0x0080, whether
 0x8000 faces act as obstacles beyond leaving no ground, instance rotation, region
 semantics per entry (field [1] is passed to FUN_00068804 after the interact state

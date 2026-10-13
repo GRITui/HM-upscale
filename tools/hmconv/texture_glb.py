@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export a gf.bin scene to a textured binary glTF (.glb). See docs/formats/texture.md.
 
-Same geometry and conventions as scene_glb.py (scale 0.01, glTF Y = -game Y, double
+Same geometry and conventions as scene_glb.py (scale 0.01, handedness via scene_glb.to_gltf, double
 sided), but every (tpage, clut) pair used by a face becomes a material with an embedded
 256x256 PNG rendered from the scene's VRAM image (texture.py). Texel 0x0000 is
 transparent (alphaMode MASK). Output belongs under assets/hm-converted/ (git-ignored).
@@ -38,7 +38,7 @@ def _mesh(buf, model, vram, materials, images, textures, stats):
             for pr, corners in tris:
                 for k in corners:
                     x, y, z = part["vertices"][pr["indices"][k]]
-                    pos.append((x * SCALE, -y * SCALE, z * SCALE))
+                    pos.append(sg.to_gltf(x, y, z))
                     c = pr["colors"][k if len(pr["colors"]) > 1 else 0]
                     col.append(tuple(min(1.0, v / 128.0) for v in c) + (1.0,))
                     if pr["uv"]:
@@ -89,7 +89,7 @@ def build_textured_glb(b, image_bytes, parsed=None):
             continue
         x, y, z = inst["shorts"][:3]
         nodes.append({"name": "instance_%d" % inst["index"], "mesh": mesh_for(inst["model_offsets"][0]),
-                      "translation": [x * SCALE, -y * SCALE, z * SCALE],
+                      "translation": list(sg.to_gltf(x, y, z)),
                       "extras": {"flags": inst["flags"], "model_offsets": inst["model_offsets"]}})
     gl_images, gl_textures = [], []
     for i, png in enumerate(images):

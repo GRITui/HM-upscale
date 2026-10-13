@@ -108,10 +108,10 @@ namespace HM.Gameplay
         {
             y = 0; x = 0; z = 0;
             if (!IsPlayer(actor) || player == null) return false;
-            float s = HM.World.FarmCoords.UnitsToMetres;
             var p = player.position;
-            x = Mathf.RoundToInt((HM.World.FarmCoords.MirrorX ? -p.x : p.x) / s);
-            z = Mathf.RoundToInt(p.z / s);
+            HM.World.FarmCoords.ToRaw(p, out var rx, out var rz);
+            x = Mathf.RoundToInt(rx);
+            z = Mathf.RoundToInt(rz);
             return true;
         }
 
@@ -145,7 +145,7 @@ namespace HM.Gameplay
 
         /// <summary>
         /// Walks an actor along one axis toward an absolute raw coordinate, honouring collision, and completes on
-        /// arrival. dir: 0 +z, 1 +x, 2 -z, 3 -x (raw axes; world x is mirrored). Vertical codes (-1, -2) complete at once.
+        /// arrival. dir: 0 +z, 1 +x, 2 -z, 3 -x (raw axes; see FarmCoords.XSign for world x). Vertical codes (-1, -2) complete at once.
         /// speed &lt;= 0 means the walk speed. The tick rate of the original is unknown, so the pace is tuned to the
         /// player's walk speed rather than derived.
         /// </summary>
@@ -160,16 +160,16 @@ namespace HM.Gameplay
             bool alongX = dir == 1 || dir == 3;
             float sign = dir == 0 || dir == 1 ? 1f : -1f;
             float unit = HM.World.FarmCoords.UnitsToMetres;
-            bool mirror = HM.World.FarmCoords.MirrorX;
+            float xs = HM.World.FarmCoords.XSign;
             Vector3 pos = body.position;
             // Current coordinate in raw units on the walked axis.
-            float cur = alongX ? (mirror ? -pos.x : pos.x) / unit : pos.z / unit;
+            float cur = alongX ? xs * pos.x / unit : pos.z / unit;
             float remaining = sign * (target - cur) * unit;          // metres still to walk in the walking sense
             if (remaining <= 0.005f) { walks.Remove(actor); return true; }
 
             float code = speed <= 0 ? WalkSpeedCode : speed;
             float step = Mathf.Min(remaining, WalkMetresPerSecond * code / WalkSpeedCode * Mathf.Max(0f, DeltaTime()));
-            float worldSign = alongX && mirror ? -sign : sign;
+            float worldSign = alongX ? xs * sign : sign;
             Vector3 delta = alongX ? new Vector3(worldSign * step, 0, 0) : new Vector3(0, 0, worldSign * step);
 
             var cc = body.GetComponent<CharacterController>();
@@ -183,7 +183,7 @@ namespace HM.Gameplay
             }
             else w.stuck = 0f;
 
-            float after = alongX ? (mirror ? -body.position.x : body.position.x) / unit : body.position.z / unit;
+            float after = alongX ? xs * body.position.x / unit : body.position.z / unit;
             if (sign * (target - after) * unit <= 0.005f) { walks.Remove(actor); return true; }
             return false;
         }

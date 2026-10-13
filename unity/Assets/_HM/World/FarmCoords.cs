@@ -16,17 +16,24 @@ namespace HM.World
     /// Player and actor speeds are NOT scaled by it: they stay at the metre values of the raw estimate
     /// (<see cref="DecompiledMetresPerSecond"/>), so crossing the larger farm takes WorldScale times longer.
     ///
-    /// Player coordinates are the scene frame itself (static decompile, confidence high). X is mirrored so the scene
-    /// matches the GLB as glTFast imports it (glTF is right handed, Unity is left handed, glTFast negates X; the
-    /// converter writes glTF y = -y_raw, so Unity y = -y_raw * scale). Change a constant here and the collision grid,
-    /// regions, spawns, GLB, sprites and camera move together; nothing else knows about scale or handedness.
+    /// HANDEDNESS (the single conversion point). The raw frame is right handed: x right, y down, z into the screen,
+    /// d-pad up = +z and right = +x (docs/baseline.md). Unity is left handed with x right, y up, z forward, so the
+    /// conversion is Unity = (x, -y, z) * scale and nothing is mirrored: the original scene reads the same on screen.
+    /// The GLB agrees because the converter writes glTF = (-x, -y, z) (tools/hmconv/scene_glb.py to_gltf, a proper
+    /// rotation) and glTFast negates x on import, landing on the same (x, -y, z). <see cref="MirrorX"/> is false; it
+    /// exists so a wrong GLB can never again be hidden by mirroring only the player. Everything that needs the sign
+    /// uses <see cref="XSign"/> or <see cref="ToRaw"/>. Change a constant here and the collision grid, regions,
+    /// spawns, GLB, sprites and camera move together; nothing else knows about scale or handedness.
     /// </summary>
     public static class FarmCoords
     {
         public const float DecompiledUnitsToMetres = 0.005f;
         public const float WorldScale = 1.5f;
         public const float UnitsToMetres = DecompiledUnitsToMetres * WorldScale;
-        public const bool MirrorX = true;
+        /// <summary>False: raw +x is world +x (see the class remarks). Do not set it to hide a converter/importer mirror.</summary>
+        public static readonly bool MirrorX = false;
+        /// <summary>World x per raw x: +1 unmirrored, -1 mirrored.</summary>
+        public static float XSign => MirrorX ? -1f : 1f;
 
         /// <summary>Scale the converter bakes into the scene GLB (tools/hmconv/scene_glb.py SCALE).</summary>
         public const float GlbUnitsToMetres = 0.01f;
@@ -42,7 +49,14 @@ namespace HM.World
         public const float DecompiledRunMetresPerSecond = RunUnitsPerSecond * DecompiledUnitsToMetres; // 10.95
 
         public static Vector3 ToWorld(float x, float y, float z) =>
-            new Vector3((MirrorX ? -x : x) * UnitsToMetres, -y * UnitsToMetres, z * UnitsToMetres);
+            new Vector3(XSign * x * UnitsToMetres, -y * UnitsToMetres, z * UnitsToMetres);
+
+        /// <summary>Inverse of <see cref="ToWorld(float,float,float)"/> for the horizontal axes: world metres to raw units (x, z).</summary>
+        public static void ToRaw(Vector3 world, out float x, out float z)
+        {
+            x = XSign * world.x / UnitsToMetres;
+            z = world.z / UnitsToMetres;
+        }
 
         public static Vector3 ToWorld(int[] raw, Vector3 fallback = default) =>
             raw != null && raw.Length >= 3 ? ToWorld(raw[0], raw[1], raw[2]) : fallback;

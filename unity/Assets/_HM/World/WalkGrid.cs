@@ -151,9 +151,9 @@ namespace HM.World
             var a = SampleToWorld(t, x0, z0); var b = SampleToWorld(t, x1, z1);
             var mid = (a + b) * 0.5f;
             var len = (b - a); len = new Vector3(Mathf.Abs(len.x), 0, Mathf.Abs(len.z));
-            // Outward offset puts the box on the blocked side of the edge. Grid +x maps to world -x when mirrored.
+            // Outward offset puts the box on the blocked side of the edge. Grid +x maps to world x * XSign.
             float outward = -side * (WallThickness * 0.5f);
-            float axisSign = alongX ? 1f : (FarmCoords.MirrorX ? -1f : 1f);
+            float axisSign = alongX ? 1f : FarmCoords.XSign;
             Vector3 off = alongX ? new Vector3(0, 0, outward) : new Vector3(outward * axisSign, 0, 0);
             var go = new GameObject("Wall " + n);
             go.transform.SetParent(parent, false);

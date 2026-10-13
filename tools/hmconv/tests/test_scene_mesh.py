@@ -1,4 +1,4 @@
-import os, struct, sys, unittest
+import json, os, struct, sys, unittest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import scene as sc  # noqa: E402
 import scene_mesh as mm  # noqa: E402
@@ -74,6 +74,24 @@ class T(unittest.TestCase):
         self.assertEqual(g[:4], b"glTF")
         self.assertEqual(struct.unpack_from("<I", g, 8)[0], len(g))
         self.assertEqual(len(g) % 4, 0)
+
+    def test_glb_handedness(self):
+        """Game x right, y down, z into the screen must reach Unity as (x, -y, z) after glTFast negates x,
+        so the glTF file holds (-x, -y, z). Winding is preserved (proper rotation, determinant +1)."""
+        self.assertEqual(scene_glb.to_gltf(100, 50, 200), (-1.0, -0.5, 2.0))
+        det = 1
+        for axis, v in enumerate(((1, 0, 0), (0, 1, 0), (0, 0, 1))):
+            det *= scene_glb.to_gltf(*v)[axis] / scene_glb.SCALE
+        self.assertEqual(det, 1.0)
+        verts = [(0, 0, 0), (100, 0, 0), (0, 0, 200), (100, 0, 200)]
+        b = bytearray(0x2000) + model(verts, [prim(0x3D, [0, 1, 2, 3])])
+        struct.pack_into("<2h", b, 2, 2, 80)
+        g = scene_glb.build_glb(bytes(b))
+        n = struct.unpack_from("<I", g, 12)[0]
+        doc = json.loads(g[20:20 + n])
+        acc = doc["accessors"][doc["meshes"][0]["primitives"][0]["attributes"]["POSITION"]]
+        self.assertEqual((acc["min"][0], acc["max"][0]), (-1.0, 0.0))
+        self.assertEqual((acc["min"][2], acc["max"][2]), (0.0, 2.0))
 
 
 if __name__ == "__main__":
