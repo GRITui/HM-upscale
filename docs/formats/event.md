@@ -184,3 +184,5 @@ Output is git-ignored; it contains game data.
 ## Unknown
 MesEv (seg029) entry selection (op 2 does not use it), ops marked unknown, the large ops 45, 81,
 85, 86, 90, 96, 102 (case tables), forced-sleep hour (hours 0-5 are a night band, FUN_0004853c).
+
+Runtime interpreter for these scripts: `event-vm.md`.

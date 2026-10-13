@@ -1,0 +1,16 @@
+{
+  "name": "HM.Events",
+  "rootNamespace": "HM.Events",
+  "references": [
+    "HM.Dialogue"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
