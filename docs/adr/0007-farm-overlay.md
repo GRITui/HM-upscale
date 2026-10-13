@@ -27,7 +27,7 @@ derive from the user's own disc image and are git-ignored. They must never be co
 
 ## Assumptions and checks
 
-All behind `FarmCoords`: `UnitsToMetres = 0.01`, `MirrorX = true` (glTFast negates X on
+All behind `FarmCoords`: `UnitsToMetres = 0.005` (estimate, docs/baseline.md), `MirrorX = true` (glTFast negates X on
 import and the converter writes y = -y), Y down in raw data.
 
 Check performed: PlayMode `FarmOverlayTests.RealFarmWalkGridContainsThePlayer` renders the

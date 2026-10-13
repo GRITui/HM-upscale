@@ -77,21 +77,40 @@ per frame). The clock freezes during dialogue and events. Measured with
 
 **D-pad axes.** Down is -z, up is +z, left is -x, right is +x.
 
-**Run and diagonal.** No run button was found (triangle opens the rucksack,
-select holds the map). Diagonal trials moved only one axis; that is
-inconclusive, since walls or axis priority could explain it. Unmeasured.
+**Static decompile of hmpsp.prx (Ghidra 12.1.4, ULUS10142; addresses are ELF vaddr, RAM = 0x08804000 + vaddr).**
+
+- Position update: `FUN_000477f4` @0x477f4 adds a per-update table velocity; `FUN_0004c2b8` @0x4c2b8 applies the
+  accumulators to the position with a face collision check (`FUN_000202fc`). Confidence high.
+- Walk is 41 raw units per update, run is 73 (`FUN_0004786c` @0x4786c, pad bit 0x20 = run, mask 0xf000 = d-pad;
+  tables at 0x1374fe..0x13754e, 16-byte blocks of 4 (dx,dz) s16 pairs per facing). Walk confidence high; the run
+  button identity (bit 0x20) is unverified, so run is medium-low.
+- No diagonals: `FUN_00047754` maps the d-pad to one of 4 facings, so only one axis moves at a time. Confidence high.
+- Logic rate is 30 Hz: `FUN_000a9378` @0xa9378 waits vblanks, `FUN_000a9194` @0xa9194 sets the count to 60/n and
+  `FUN_000a91c4` @0xa91c4 defaults n to 1, giving 2 vblanks per logic frame. 41 x 30 = 1230 units/s, which equals the
+  measured 20.5 per 60 Hz frame. Confidence high.
+- Clock: `FUN_000934c8` @0x934c8 counts a frame counter (0x1a9dbc) and adds one game minute when it reaches
+  `DAT_0013ed88 * 30 / 60` with `DAT_0013ed88` = 30 (initialised data), i.e. 15 updates = 0.5 s, so 2 game minutes per
+  second. Matches the measurement. Confidence high. Minutes roll at 60 into hours (0x1ae1a8), hour 6 starts a new
+  day. The forced-sleep site was not located statically (unproven).
+- Camera: defaults in `FUN_000709cc` @0x709cc, eye offset `FUN_00070ba4` @0x70ba4, eye and target `FUN_00070cbc`
+  @0x70cbc. It is a look-at follow camera, eye = target + R_y(yaw)(0,0,dist) plus a height. Projection distance H is
+  1000 with screen centre (0xa0,0x78) on 480x272. A true FOV is not in a table. Confidence medium.
+- Correction: the position at RAM 0x08950418 recorded earlier is the camera eye, not the player. The player and the
+  map_080..095 scene share one frame (no transform, no scale), so the earlier "different frame" finding was the eye
+  offset. The player's own position is near RAM 0x089b2fb0 (unverified by emulator). The yard bounds below are
+  therefore eye bounds.
 
 **Yard bounds.** Walkable x runs roughly -637 to 2110..2475 and z roughly
--4479 to -1944. Walking up past z=-1944 near x=2110 changes map (arrives at
+-4479 to -1944 (camera eye). Walking up past z=-1944 near x=2110 changes map (arrives at
 about 7495, -11430).
 
-**Unit scale.** Not proven. Player coordinates sit in a different frame from
-the map_080 scene (terrain x -1800..1800, z -1768..1800), and no landmark
-matched. The farm is about 36 m wide at 0.01, but 1229 units/s would be
-12.3 m/s walking, which is implausible as metres. So FarmCoords scale 0.01 and
-MirrorX are unconfirmed assumptions, not contradicted by position, and probably
-wrong for speed. Unity keeps them unchanged; walking pace was tuned to the
-measured raw speed times 0.01.
+**Unit scale.** The engine has no metre unit; it is an estimate. Anchors: the 48-unit collision probe radius,
+100-unit cells, and the sprite height against the 0.1 px per unit projection all point to about 0.005 m per unit
+(confidence medium). At 0.005 the walk is 6.15 m/s and run is 10.95 m/s. That is fast for a person but the world is
+a chibi diorama where a 2747-unit yard is about 14 m wide. Mirroring: the raw frame is right handed (x right, y down,
+z into the screen); the converter writes (x, -y, z) and glTFast negates X, so the imported GLB is x-mirrored
+relative to the game. Unity keeps `FarmCoords.MirrorX = true` so the player matches the imported mesh; the on-screen
+scene is therefore mirrored versus the original until the converter or importer is fixed.
 
 **Press-duration caveat.** The debugger press `duration` is not an exact frame
 count, and menus or events swallow the first input. Use slopes across several
@@ -100,9 +119,9 @@ via `input.buttons.send` only moves if re-sent about every 30 ms.
 
 ### Retuned in Unity
 
-- `PlayerMover` walk 12.3 (was 3.5), run 20.5 (was 6); run is walk times 20/12
-  (low confidence).
-- `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.01.
+- `FarmCoords.UnitsToMetres` 0.005 (was 0.01), `MirrorX` unchanged.
+- `PlayerMover` walk 6.15 m/s, run 10.95 m/s (73/41 of walk).
+- `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.005 = 6.15 m/s.
 - Game clock stays at 2 minutes per real second (matches the measurement).
 - Camera: not measured, unchanged.
 
@@ -118,10 +137,10 @@ in a 16:9 frame; the captured window letterboxes it.
 
 ## Unanswered
 
-- True unit scale and mirroring (raw units to metres), and the walking speed in metres.
-- Run speed and diagonal movement.
-- Camera pitch, yaw and distance outdoors.
-- Exact frame rate read from the game.
+- The metre scale (0.005 is an estimate) and a mirror-faithful import.
+- Run button identity, and the forced-sleep location.
+- Camera yaw, pitch and FOV for the farm map (only the look-at structure and H = 1000 are known).
+- Player position address confirmation in the emulator (one spot-check pending).
 - Unattended end-to-end `capture.py` run.
 - Collider shapes.
 

@@ -137,6 +137,14 @@ namespace HM.Tests
         }
 
         [Test]
+        public void WalkPaceMatchesTheDecompiledRawSpeed()
+        {
+            // 41 raw units per 30 Hz update (hmpsp.prx FUN_0004786c); see docs/baseline.md.
+            Assert.AreEqual(6.15f, 41f * 30f * FarmCoords.UnitsToMetres, 1e-3f);
+            Assert.AreEqual(10.95f, 73f * 30f * FarmCoords.UnitsToMetres, 1e-3f);
+        }
+
+        [Test]
         public void StaleConvertedMapWithoutTerrainStillParses()
         {
             var m = MapData.Parse(@"{""schema"":1,""id"":""map_080"",""terrain"":null,""regions"":[]}");
