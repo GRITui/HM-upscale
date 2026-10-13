@@ -58,6 +58,14 @@ namespace HM.World
             z = world.z / UnitsToMetres;
         }
 
+        /// <summary>
+        /// Emulator-measured camera offset, eye minus player, in raw units (docs/baseline.md, Camera): constant for the
+        /// whole walk, yaw 45 deg, pitch 26.57 deg down, 9000 horizontal, 4500 above. MEASURED.
+        /// </summary>
+        public static readonly Vector3 RawCameraOffset = new Vector3(6363f, -4500f, -6364f);
+        /// <summary>The raw camera offset in world metres: (47.7, 33.75, -47.7). Camera sits at +x, -z, above the player.</summary>
+        public static Vector3 CameraOffset => ToWorld(RawCameraOffset.x, RawCameraOffset.y, RawCameraOffset.z);
+
         public static Vector3 ToWorld(int[] raw, Vector3 fallback = default) =>
             raw != null && raw.Length >= 3 ? ToWorld(raw[0], raw[1], raw[2]) : fallback;
     }

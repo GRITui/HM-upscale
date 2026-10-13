@@ -14,6 +14,14 @@ namespace HM.Tests.PlayMode
     /// <summary>Farm overlay in the real SliceFarm scene: clean fallback, and (when converted data exists locally) walk-grid collision.</summary>
     public class FarmOverlayTests
     {
+        [Test]
+        public void RunIsCircleAndSeventyThreeOverFortyOne()
+        {
+            Assert.AreEqual("<Gamepad>/buttonEast", PlayerMover.RunGamepadBinding);
+            Assert.IsNotEmpty(PlayerMover.RunKeyboardBinding);
+            Assert.AreEqual(73f / 41f, FarmCoords.DecompiledRunMetresPerSecond / FarmCoords.DecompiledMetresPerSecond, 1e-4f);
+        }
+
         [TearDown]
         public void Cleanup()
         {

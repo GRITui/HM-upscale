@@ -5,17 +5,25 @@ using UnityEngine;
 namespace HM.CameraRig
 {
     /// <summary>
-    /// Fixed-angle 3/4 follow camera for a farm-sized area (roughly 60 to 120 m across).
-    /// The camera never rotates: it holds a constant world-space offset from the target at a
-    /// downward pitch and a diagonal yaw, so movement relative to the camera stays predictable.
+    /// Fixed-angle follow camera using the emulator-measured offset (docs/baseline.md). The camera never rotates
+    /// and never lags: it holds a constant world-space offset from the target.
     /// </summary>
     public static class FarmCamera
     {
-        public const float DefaultPitch = 50f;      // degrees down from horizontal
-        public const float DefaultYaw = 45f;        // degrees around Y; 45 shows two faces of a building
-        public const float DefaultDistance = 20f;   // metres from target to camera
-        public const float DefaultFov = 35f;        // narrow lens flattens perspective, reads as 3/4 view
-        public static readonly Vector3 TargetHeight = new Vector3(0f, 1f, 0f);
+        /// <summary>Raw projection constant H of the PSP engine (docs/baseline.md): focal length in screen pixels. MEASURED.</summary>
+        public const float RawProjectionH = 1000f;
+        /// <summary>Native screen height in pixels (480x272). MEASURED.</summary>
+        public const float ScreenHeight = 272f;
+        /// <summary>
+        /// Vertical field of view in degrees, DERIVED (not measured): the lens that reproduces H=1000 on a 272 high
+        /// screen, 2*atan((272/2)/1000) = 15.49 deg. Used with the centre (160,120) approximated as the screen centre.
+        /// </summary>
+        public static readonly float DerivedVerticalFov = 2f * Mathf.Atan(ScreenHeight * 0.5f / RawProjectionH) * Mathf.Rad2Deg;
+
+        /// <summary>Measured fixed offset from the player (feet) to the camera, in world metres. See FarmCoords.RawCameraOffset.</summary>
+        public static Vector3 MeasuredOffset => HM.World.FarmCoords.CameraOffset;
+        /// <summary>Rotation looking from the measured offset back at the player: yaw 315 (-45), pitch 26.57 deg down.</summary>
+        public static Quaternion MeasuredRotation => Quaternion.LookRotation(-MeasuredOffset, Vector3.up);
 
         /// <summary>World-space camera offset from the target for a pitch/yaw/distance orbit position.</summary>
         public static Vector3 Offset(float pitchDeg, float yawDeg, float distance)
@@ -23,13 +31,6 @@ namespace HM.CameraRig
             var rot = Quaternion.Euler(pitchDeg, yawDeg, 0f);
             return rot * new Vector3(0f, 0f, -distance);
         }
-
-        /// <summary>
-        /// Scales a follow offset that was authored for the raw proportions (the scene stores distance 20) up to the
-        /// world scale of the farm overlay, so the framing and the character size on screen are unchanged and the
-        /// larger farm is simply larger. The height above the target scales with it.
-        /// </summary>
-        public static Vector3 ScaleOffsetForWorld(Vector3 offset) => offset * HM.World.FarmCoords.WorldScale;
 
         /// <summary>Camera rotation that looks along the orbit direction (towards the target).</summary>
         public static Quaternion Rotation(float pitchDeg, float yawDeg) => Quaternion.Euler(pitchDeg, yawDeg, 0f);
@@ -45,23 +46,27 @@ namespace HM.CameraRig
             return groundRadius * s / Mathf.Tan(halfFov);
         }
 
-        /// <summary>Configures a CinemachineCamera as the 3/4 follow rig. Adds the components it needs.</summary>
-        public static void Configure(CinemachineCamera cam, Transform target,
-            float pitch = DefaultPitch, float yaw = DefaultYaw, float distance = DefaultDistance, float fov = DefaultFov)
+        /// <summary>
+        /// Applies the measured emulator camera to a CinemachineCamera: fixed world-space offset from the player, no
+        /// damping (the original is a fixed POV with no lag), rotation looking at the player, derived FOV. Adds the
+        /// components it needs.
+        /// </summary>
+        public static void Configure(CinemachineCamera cam, Transform target)
         {
             cam.Follow = target;
             cam.LookAt = null; // fixed rotation: no aim component, so nothing rotates the camera
-            cam.Lens.FieldOfView = fov;
-            cam.Lens.NearClipPlane = 0.3f;
-            cam.Lens.FarClipPlane = 300f;
-            cam.transform.rotation = Rotation(pitch, yaw);
+            cam.Lens.FieldOfView = DerivedVerticalFov;
+            cam.Lens.NearClipPlane = 1f;
+            cam.Lens.FarClipPlane = 500f;
+            cam.transform.rotation = MeasuredRotation;
 
             var follow = cam.GetComponent<CinemachineFollow>();
             if (follow == null) follow = cam.gameObject.AddComponent<CinemachineFollow>();
-            follow.FollowOffset = Offset(pitch, yaw, distance) + TargetHeight;
+            follow.FollowOffset = MeasuredOffset;
             follow.TrackerSettings.BindingMode = BindingMode.WorldSpace;
-            follow.TrackerSettings.PositionDamping = new Vector3(0.6f, 0.9f, 0.6f);
+            follow.TrackerSettings.PositionDamping = Vector3.zero;
             follow.TrackerSettings.AngularDampingMode = AngularDampingMode.Euler;
+            follow.TrackerSettings.RotationDamping = Vector3.zero;
         }
 
         /// <summary>Keeps the camera inside an area's bounds. The collider must be a trigger-free volume spanning the area.</summary>

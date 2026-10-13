@@ -151,10 +151,34 @@ via `input.buttons.send` only moves if re-sent about every 30 ms.
 ### Retuned in Unity
 
 - `FarmCoords.DecompiledUnitsToMetres` 0.005 (the estimate), `MirrorX` false (see Handedness).
-- DESIGN DECISION (user approved, not a measurement): the farm is built 1.5x larger than the decompiled proportions so it feels like a place rather than a 14 m yard. `FarmCoords.WorldScale = 1.5`, so `UnitsToMetres = 0.0075` (a 2747-unit yard is about 20.6 m). Terrain, collision, regions, spawns, NPC and actor positions, the GLB (`GlbScale` 0.75), sprites (pixels per unit x1.5, so characters stay in proportion to doors and furniture) and the camera follow distance (20 to 30 m, same framing) all derive from it.
+- DESIGN DECISION (user approved, not a measurement): the farm is built 1.5x larger than the decompiled proportions so it feels like a place rather than a 14 m yard. `FarmCoords.WorldScale = 1.5`, so `UnitsToMetres = 0.0075` (a 2747-unit yard is about 20.6 m). Terrain, collision, regions, spawns, NPC and actor positions, the GLB (`GlbScale` 0.75), sprites (pixels per unit x1.5, so characters stay in proportion to doors and furniture) and the camera offset (measured raw offset through FarmCoords) all derive from it.
 - Speeds stay in the decompiled metres: `PlayerMover` walk 6.15 m/s, run 10.95 m/s (73/41 of walk), `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.005 = 6.15 m/s. Crossing the larger world therefore takes 1.5x longer. Game clock, event timing and rules are unchanged.
 - Game clock stays at 2 minutes per real second (matches the measurement).
-- Camera: measured (yaw 45, pitch 26.57, distance 10062 raw units); check the Unity follow camera against it.
+- Camera: the measured offset is now what Unity uses. `FarmCoords.RawCameraOffset` (6363, -4500, -6364) converts through `FarmCoords.ToWorld` to (47.72, 33.75, -47.72) m (distance 75.5 m, yaw 315 = -45, pitch 26.57). `FarmCamera.Configure` applies it as a fixed Cinemachine follow with zero position and rotation damping (the original has no lag) and no LookAt. The vertical FOV is `FarmCamera.DerivedVerticalFov` = 2 atan(136/1000) = 15.49 degrees, one constant marked DERIVED (not measured). Tests: `FarmCameraTests` (offset equals the converted raw offset, rotation, FOV reproduces H = 1000, d-pad directions on screen).
+- Sprites are drawn 1:1 with the screen in the original (0.0994 px per raw unit, about 10 units per pixel), so `LoadedSheet.BaseMetresPerPixel` is now 10 x 0.005 = 0.05 m (was a guessed 0.03). DERIVED from the projection; the player went from about half to about the original share of the screen height.
+- Run is Circle: `PlayerMover` binds gamepad buttonEast and keyboard left shift, 73 vs 41 raw units (the 73/41 ratio is tested).
+
+### Unity vs emulator comparison (frame capture)
+
+`unity/HMUpscale` dev player, `-hm-shot farm.png -hm-shot-frames 6 -hm-shot-interval 1 -hm-shot-size 960x544`
+(`HM_CONVERTED` pointing at assets/hm-converted). Frames and a still side-by-side with `now.png` are in the
+git-ignored assets/hm-baseline/unity/. No Unity video exists, so the ffmpeg command above was only run on stills
+(`-i now.png -i unity/farm_003.png ... hstack`).
+
+- Matches: camera angle and framing direction (high oblique dollhouse, same yaw/pitch, the character stays near the
+  centre); sprite size relative to the screen after the fix above (about 17 percent of the frame height in both);
+  unmirrored orientation (the converter fix, GLB regenerated, no mirror).
+- Does not match: the Unity scene is map_080, which renders as a grey, untextured room interior (bed, tables, shelf),
+  not the outdoor yard in the emulator screenshot. The emulator frame shows textured grass, fence, a barn and a
+  doghouse. So tile alignment, wall clipping and the outdoor look cannot be compared yet. Rows 80..95 hold the
+  farm-named maps but their decoded geometry is a 3100 x 2800 unit space around the origin, while the emulator
+  yard (player frame) is x -7000..-4253, z 1885..4420. The offset (about -5750, +3150) is unresolved, so the
+  walk grid is not proven to be the yard. The scene is also untextured; the textured GLBs were not regenerated.
+  The HUD text panel differs (Unity placeholder). The original has absolute d-pad axes; `PlayerMover` is
+  camera-relative.
+- Door, exit and spawn: tested as `FarmCoords` conversions only (exit raw (-4253, 0, 4420) maps to +z and round
+  trips; arrival (-4464, 0, 4032) maps to x -33.48, z 30.24). They cannot be placed on the scene grid until the frame
+  offset is resolved.
 
 ## Side-by-side with Unity
 

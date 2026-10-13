@@ -7,7 +7,8 @@ using UnityEngine.UI;
 namespace HM.Core
 {
     /// <summary>
-    /// Player flag driven screenshot: -hm-shot PATH [-hm-shot-delay SECONDS] [-hm-shot-size WxH].
+    /// Player flag driven screenshot: -hm-shot PATH [-hm-shot-delay SECONDS] [-hm-shot-size WxH]
+    /// [-hm-shot-frames N -hm-shot-interval SECONDS] (N numbered PNGs, PATH_000.png...).
     /// Renders the main camera and any uGUI canvases into one RenderTexture and writes a PNG, then quits.
     /// It exists so the scene and HUD can be checked in a headless or locked-session run where a window
     /// grab is impossible. It is an in-engine render, not an OS window capture.
@@ -18,6 +19,8 @@ namespace HM.Core
         float delay;
         int w = 1280, h = 720;
         float t;
+        int frames = 1, index;
+        float interval = 0.5f;
         bool done;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -32,6 +35,10 @@ namespace HM.Core
             c.path = args[i + 1];
             int d = Array.IndexOf(args, "-hm-shot-delay");
             if (d >= 0 && d + 1 < args.Length) float.TryParse(args[d + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out c.delay);
+            int fr = Array.IndexOf(args, "-hm-shot-frames");
+            if (fr >= 0 && fr + 1 < args.Length) int.TryParse(args[fr + 1], out c.frames);
+            int iv = Array.IndexOf(args, "-hm-shot-interval");
+            if (iv >= 0 && iv + 1 < args.Length) float.TryParse(args[iv + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out c.interval);
             int z = Array.IndexOf(args, "-hm-shot-size");
             if (z >= 0 && z + 1 < args.Length)
             {
@@ -69,13 +76,19 @@ namespace HM.Core
             tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
             tex.Apply();
             RenderTexture.active = prev;
+            string outPath = frames > 1
+                ? Path.Combine(Path.GetDirectoryName(path) ?? "", Path.GetFileNameWithoutExtension(path) + "_" + index.ToString("000") + ".png")
+                : path;
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
-                File.WriteAllBytes(path, tex.EncodeToPNG());
-                Debug.Log("[HM-SHOT] wrote " + path);
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath)));
+                File.WriteAllBytes(outPath, tex.EncodeToPNG());
+                Debug.Log("[HM-SHOT] wrote " + outPath);
             }
             catch (Exception e) { Debug.LogError("[HM-SHOT] " + e.Message); }
+            cam.targetTexture = null;
+            Destroy(tex); rt.Release(); Destroy(rt);
+            if (++index < frames) { done = false; t = 0f; delay = interval; yield break; }
             Application.Quit();
         }
     }

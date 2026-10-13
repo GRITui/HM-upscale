@@ -125,7 +125,7 @@ namespace HM.Importers
 
             var rigGo = new GameObject("Follow Camera", typeof(CinemachineCamera));
             HM.CameraRig.FarmCamera.Configure(rigGo.GetComponent<CinemachineCamera>(), player.transform);
-            camGo.transform.rotation = HM.CameraRig.FarmCamera.Rotation(HM.CameraRig.FarmCamera.DefaultPitch, HM.CameraRig.FarmCamera.DefaultYaw);
+            camGo.transform.rotation = HM.CameraRig.FarmCamera.MeasuredRotation;
 
             // Farm world: rules + dialogue data, plot grid and art slots.
             var worldGo = new GameObject("FarmWorld", typeof(FarmWorld));

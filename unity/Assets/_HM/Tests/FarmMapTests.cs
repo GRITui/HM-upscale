@@ -204,4 +204,31 @@ namespace HM.Tests
             Assert.IsTrue(FarmOverlay.Resolve(temp, 80).HasGlb);
         }
     }
+
+    /// <summary>Emulator-measured raw positions (docs/baseline.md) through FarmCoords under the unmirrored handedness.</summary>
+    public class FarmBaselinePositionTests
+    {
+        [Test]
+        public void YardNorthExitMapsToPositiveZUnmirrored()
+        {
+            // Player frame: eye x 2110 and z -1944 minus the camera offset (6363, -6364) = (-4253, 4420), the point where
+            // walking up leaves the yard (also the max z of the emulator walk, walk.csv).
+            var w = FarmCoords.ToWorld(-4253, 0, 4420);
+            Assert.AreEqual(-4253f * 0.0075f, w.x, 1e-3f);
+            Assert.AreEqual(4420f * 0.0075f, w.z, 1e-3f);
+            Assert.AreEqual(0f, w.y, 1e-6f);
+            Assert.Less(w.x, 0f, "raw -x stays -x: no mirror");
+            FarmCoords.ToRaw(w, out var rx, out var rz);
+            Assert.AreEqual(-4253f, rx, 0.01f); Assert.AreEqual(4420f, rz, 0.01f);
+        }
+
+        [Test]
+        public void FarmArrivalMapsAcrossHandedness()
+        {
+            // map_080 region 0 arrival (-4464, 0, 4032): the first yard position after the farmhouse door.
+            var w = FarmCoords.ToWorld(new[] { -4464, 0, 4032 });
+            Assert.AreEqual(-33.48f, w.x, 0.01f);
+            Assert.AreEqual(30.24f, w.z, 0.01f);
+        }
+    }
 }

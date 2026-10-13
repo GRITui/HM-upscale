@@ -102,6 +102,61 @@ namespace HM.Tests
         }
 
         [Test]
+        public void MeasuredOffsetEqualsConvertedRawOffset()
+        {
+            // docs/baseline.md: eye minus player is (+6363, -4500, -6364) raw units, constant.
+            var expect = new Vector3(6363f, 4500f, -6364f) * FarmCoords.UnitsToMetres; // raw y is down, Unity y is up
+            Assert.AreEqual(expect.x, FarmCamera.MeasuredOffset.x, 1e-4f);
+            Assert.AreEqual(expect.y, FarmCamera.MeasuredOffset.y, 1e-4f);
+            Assert.AreEqual(expect.z, FarmCamera.MeasuredOffset.z, 1e-4f);
+            Assert.AreEqual(47.72f, FarmCamera.MeasuredOffset.x, 0.01f);
+            Assert.AreEqual(33.75f, FarmCamera.MeasuredOffset.y, 0.001f);
+        }
+
+        [Test]
+        public void MeasuredCameraLooksAtThePlayerAtYaw45AndPitch26()
+        {
+            var o = FarmCamera.MeasuredOffset;
+            var fwd = FarmCamera.MeasuredRotation * Vector3.forward;
+            Assert.AreEqual(1f, Vector3.Dot(fwd, -o.normalized), 1e-5f, "looks from the eye to the player");
+            Assert.Greater(o.x, 0f, "eye is at +x");
+            Assert.Less(o.z, 0f, "eye is at -z");
+            var e = FarmCamera.MeasuredRotation.eulerAngles;
+            Assert.AreEqual(315f, e.y, 0.05f); // yaw 45 about the raw frame is -45 in the left-handed Unity frame
+            Assert.AreEqual(26.57f, e.x, 0.05f);
+            Assert.AreEqual(Mathf.Atan2(4500f, 9000f) * Mathf.Rad2Deg, e.x, 0.05f);
+            Assert.AreEqual(10062f * FarmCoords.UnitsToMetres, o.magnitude, 0.02f);
+        }
+
+        [Test]
+        public void DerivedFovReproducesProjectionH()
+        {
+            Assert.AreEqual(15.49f, FarmCamera.DerivedVerticalFov, 0.01f);
+            float h = (FarmCamera.ScreenHeight * 0.5f) / Mathf.Tan(FarmCamera.DerivedVerticalFov * 0.5f * Mathf.Deg2Rad);
+            Assert.AreEqual(1000f, h, 0.01f);
+        }
+
+        [Test]
+        public void SpritePixelIsOneNativeScreenPixelAtTheMeasuredDistance()
+        {
+            // At the measured camera distance one native screen pixel spans distance*tan(fov/2)*2/272 metres.
+            float metresPerScreenPixel = FarmCamera.MeasuredOffset.magnitude * 2f
+                * Mathf.Tan(FarmCamera.DerivedVerticalFov * 0.5f * Mathf.Deg2Rad) / FarmCamera.ScreenHeight;
+            Assert.AreEqual(metresPerScreenPixel, HM.Sprites.LoadedSheet.MetresPerPixel, HM.Sprites.LoadedSheet.MetresPerPixel * 0.01f);
+        }
+
+        [Test]
+        public void DpadDirectionsReadOnScreenAsInTheOriginal()
+        {
+            // Raw d-pad up = +z and right = +x. Through the camera, +z goes up and to the right on screen, +x goes down and right.
+            var inv = Quaternion.Inverse(FarmCamera.MeasuredRotation);
+            var up = inv * Vector3.forward;   // +z world
+            var right = inv * Vector3.right;  // +x world
+            Assert.Greater(up.x, 0.3f); Assert.Greater(up.y, 0f);
+            Assert.Greater(right.x, 0.3f); Assert.Less(right.y, 0f);
+        }
+
+        [Test]
         public void FitDistanceGrowsWithAreaAndShrinksWithWiderLens()
         {
             float d30 = FarmCamera.FitDistance(30f, 35f, 50f);
@@ -123,7 +178,10 @@ namespace HM.Tests
                 Assert.AreSame(target.transform, cam.Follow);
                 Assert.IsNull(cam.LookAt, "no aim target: rotation stays fixed");
                 Assert.IsNull(rigGo.GetComponent<CinemachineRotationComposer>());
-                Assert.AreEqual(FarmCamera.DefaultFov, cam.Lens.FieldOfView, 0.001f);
+                Assert.AreEqual(FarmCamera.DerivedVerticalFov, cam.Lens.FieldOfView, 0.001f);
+                Assert.AreEqual(Vector3.zero, follow.TrackerSettings.PositionDamping, "fixed POV: no lag");
+                Assert.AreEqual(FarmCoords.CameraOffset, follow.FollowOffset);
+                Assert.AreEqual(0f, Quaternion.Angle(FarmCamera.MeasuredRotation, rigGo.transform.rotation), 0.001f);
                 Assert.AreEqual(BindingMode.WorldSpace, follow.TrackerSettings.BindingMode);
             }
             finally { Object.DestroyImmediate(rigGo); Object.DestroyImmediate(target); }

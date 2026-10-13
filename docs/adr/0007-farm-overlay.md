@@ -44,9 +44,19 @@ The user chose to make the farm feel like a place instead of a 14 m yard. This i
 departure from raw proportions, applied from the single source `FarmCoords.WorldScale` (1.5).
 Everything derived from raw units scales with it: walk grid, regions, spawns, actors (all through
 `UnitsToMetres` 0.0075), the GLB (converter writes 0.01 m per unit, so `GlbScale` 0.75), sprite
-billboards (`LoadedSheet.MetresPerPixel` x1.5, so characters stay proportionate to doors and
-furniture rather than shrinking against them), and the camera follow offset (x1.5 at runtime in the
-overlay, preserving framing and on-screen size). Player speed stays 6.15 walk / 10.95 run m/s
+billboards (`LoadedSheet.MetresPerPixel` = 10 raw units per pixel x 0.005 x 1.5, so characters stay proportionate to doors and
+furniture rather than shrinking against them), and the camera follow offset (the measured raw offset converted
+through `FarmCoords`, so it carries the 1.5x). Player speed stays 6.15 walk / 10.95 run m/s
 (`FarmCoords.DecompiledMetresPerSecond`), so crossing takes 1.5x longer. The game clock and event
 rules are untouched. Invisible collision proxies (wall height, region height) and the player
 capsule are unchanged.
+
+## Update: measured camera and sprite scale
+
+The guessed camera (pitch, yaw, distance, FOV, x1.5 rescale in the bootstrap) is replaced by the measured eye
+offset (6363, -4500, -6364) raw through `FarmCoords.CameraOffset`: a fixed follow with zero damping, rotation
+looking along the negated offset (yaw 315, pitch 26.57), and `FarmCamera.DerivedVerticalFov` 15.49 degrees
+(derived from H = 1000 and a 272 px screen, not measured). Sprites are 1:1 with the screen in the original, so the
+sprite scale is 10 raw units per pixel. Run is Circle (73 vs 41). Known open issue: map_080 renders as an
+untextured room interior and the emulator player frame is offset from the scene grid, so the outdoor yard is not
+yet reproduced; see docs/baseline.md, "Unity vs emulator comparison".

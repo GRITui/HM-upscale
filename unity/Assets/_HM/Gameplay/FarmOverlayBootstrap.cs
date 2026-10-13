@@ -118,12 +118,12 @@ namespace HM.Gameplay
             }
         }
 
-        /// <summary>The scene stores the follow offset for the raw proportions; the overlay world is WorldScale larger.</summary>
+        /// <summary>The scene stores a guessed camera; replace it with the measured one (offset, rotation, FOV, no lag).</summary>
         static void ScaleCamera(Scene scene)
         {
             foreach (var root in scene.GetRootGameObjects())
-                foreach (var f in root.GetComponentsInChildren<Unity.Cinemachine.CinemachineFollow>(true))
-                    f.FollowOffset = HM.CameraRig.FarmCamera.ScaleOffsetForWorld(f.FollowOffset);
+                foreach (var c in root.GetComponentsInChildren<Unity.Cinemachine.CinemachineCamera>(true))
+                    HM.CameraRig.FarmCamera.Configure(c, c.Follow);
         }
 
         static void HidePlaceholders(Scene scene)
