@@ -103,5 +103,30 @@ namespace HM.Tests.PlayMode
             yield return null;
             yield return Shot("farm_overlay_collision_floor");
         }
+
+        [UnityTest]
+        public IEnumerator TeardownMidGlbLoadLogsNothing()
+        {
+            if (FarmOverlay.Find() == null) Assert.Ignore("converted farm not present locally");
+            var seen = new System.Collections.Generic.List<string>();
+            Application.LogCallback cb = (msg, _, type) => { if (msg.Contains("[HM-FARM] scene GLB failed") || msg.Contains("has been destroyed")) seen.Add(msg); };
+            Application.logMessageReceived += cb;
+            try
+            {
+                yield return Load();
+                // Wait until the overlay is built but cut the scene away before the GLB finishes instantiating.
+                float t = 0f;
+                while (!FarmOverlayBootstrap.Loaded && t < 30f) { t += Time.unscaledDeltaTime; yield return null; }
+                var ov = UnityEngine.Object.FindFirstObjectByType<FarmOverlayBootstrap>();
+                Assert.IsNotNull(ov);
+                UnityEngine.Object.Destroy(ov.gameObject);
+                for (int i = 0; i < 120; i++) yield return null;
+                var empty = SceneManager.CreateScene("TeardownProbe");
+                SceneManager.SetActiveScene(empty);
+                yield return null;
+            }
+            finally { Application.logMessageReceived -= cb; }
+            Assert.IsEmpty(seen, "no destroyed-object noise after teardown: " + string.Join(" | ", seen));
+        }
     }
 }

@@ -98,18 +98,24 @@ namespace HM.Gameplay
             {
                 var gltf = new GltfImport();
                 bool ok = await gltf.LoadGltfBinary(File.ReadAllBytes(paths.Glb), new Uri(paths.Glb));
+                if (this == null) { gltf.Dispose(); return; } // scene unloaded while the GLB was loading
                 if (!ok) { Debug.LogWarning(Tag + "glTFast failed to load " + paths.Glb); return; }
                 var visuals = new GameObject("FarmVisuals");
                 visuals.transform.SetParent(transform, false);
                 // The converter bakes 0.01 m/unit into the GLB; bring it to the same scale as the collision grid.
                 visuals.transform.localScale = Vector3.one * FarmCoords.GlbScale;
                 await gltf.InstantiateMainSceneAsync(visuals.transform);
+                if (this == null) { gltf.Dispose(); return; } // destroyed mid-instantiate; nothing left to configure
                 // The GLB supplies the visible ground; the walk grid stays as invisible collision.
                 foreach (var r in Built.Root.GetComponentsInChildren<MeshRenderer>()) r.enabled = false;
                 GlbLoaded = true;
                 Debug.Log(Tag + "scene GLB instantiated");
             }
-            catch (Exception e) { Debug.LogWarning(Tag + "scene GLB failed: " + e.Message); }
+            catch (Exception e)
+            {
+                if (this == null) return; // teardown race, not a failure
+                Debug.LogWarning(Tag + "scene GLB failed: " + e.Message);
+            }
         }
 
         /// <summary>The scene stores the follow offset for the raw proportions; the overlay world is WorldScale larger.</summary>

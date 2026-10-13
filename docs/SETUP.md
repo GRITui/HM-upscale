@@ -75,6 +75,17 @@ Verified headless: the extension scripts path loads and a binary import with
 
 Known limit: `PSP_GAME/SYSDIR/EBOOT.BIN` is encrypted (`~PSP` header), so Ghidra's auto-loader finds no load spec. It must be decrypted first (tracked in issue #4). No separate PSP PRX/ELF loader was found; decrypted ELF/PRX files import with the standard ELF loader once the Allegrex language exists.
 
+Plain ELF copies: `PSP_GAME/SYSDIR/BOOT.BIN` is already a plain ELF. Its SHA-1
+`5fa61faae9bd5b29f1398d10ad8adc17735e4e8d` equals `assets/hm-raw/eboot/main_boot.prx.elf`, and
+`USRDIR/hmpsp.prx` and `USRDIR/hmGirl.prx` equal the `eboot/*.elf` copies. Import those into
+Ghidra directly; no decryption step is needed for analysis.
+
+## Project board and hook check
+
+The GitHub project board (Backlog, Doing, Verify, Done) is a user-level project on the repo
+owner's account. To prove the pre-commit hook rejects game-data files, run
+`tools/hooks/test-precommit-e2e.sh`; it uses a temporary clone and leaves this repo untouched.
+
 ## Baseline capture
 
     /Applications/PPSSPPSDL.app/Contents/MacOS/PPSSPPSDL assets/hm-raw/iso/hm.iso
