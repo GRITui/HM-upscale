@@ -133,3 +133,7 @@ Open questions:
   digits of the overlay `data.id`, which matches the row numbering of the converted maps.
 
 PlayMode tests: `Tests/PlayMode/FarmEventTests.cs` (synthetic scripts and catalog only).
+
+Map 0 events and gaps (issue 8): the director's `SetMap` follows every warp, so the resident script of the new row
+runs when it has data. Region event ids 523, 582, 604 and 630 have no entry in event_s, so walking into those regions
+runs nothing; region types 6, 10, 12, 13, 32, 45, 46, 47 and 72 are not decoded; the shipping bin is not wired.

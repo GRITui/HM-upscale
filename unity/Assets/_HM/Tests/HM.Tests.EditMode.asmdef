@@ -9,6 +9,7 @@
     "HM.Audio",
     "HM.Tools",
     "HM.CameraRig",
+    "HM.Characters",
     "Unity.Cinemachine",
     "Unity.Addressables",
     "Unity.Addressables.Editor",

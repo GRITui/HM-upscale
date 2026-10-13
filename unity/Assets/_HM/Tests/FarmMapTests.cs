@@ -250,5 +250,43 @@ namespace HM.Tests
             Assert.AreEqual(-33.48f, w.x, 0.01f);
             Assert.AreEqual(30.24f, w.z, 0.01f);
         }
+
+        [Test]
+        public void YardRowIsSeasonPlusFourTimesBuildingFlag()
+        {
+            // FUN_0006872c / gf.farm_row: rows 0..3 are the seasons, 4..7 the building variant.
+            for (int season = 0; season < 4; season++)
+            {
+                Assert.AreEqual(season, FarmOverlay.FarmRow(season, 0));
+                Assert.AreEqual(season + 4, FarmOverlay.FarmRow(season, 1));
+            }
+            Assert.AreEqual(0, FarmOverlay.FarmRow(-1, -1), "out of range clamps");
+            Assert.AreEqual(7, FarmOverlay.FarmRow(9, 5));
+            FarmOverlay.State.Season = 2; FarmOverlay.State.BuildingFlag = 1;
+            try { Assert.AreEqual(6, FarmOverlay.YardRow); }
+            finally { FarmOverlay.State.Season = 0; FarmOverlay.State.BuildingFlag = 0; }
+        }
+
+        [Test]
+        public void DoorTargetRowFollowsFun00068804()
+        {
+            var st = new FarmOverlay.RowState { Season = 1, HouseLevel = 1, Level60 = 0, Level70 = 2 };
+            Assert.AreEqual(0x50 + 1 + 4, FarmOverlay.DoorTargetRow(80, st), "farmhouse: 0x50 + season + 4 * house level");
+            Assert.AreEqual(0x60 + 1, FarmOverlay.DoorTargetRow(96, st));
+            Assert.AreEqual(0x70 + 1 + 8, FarmOverlay.DoorTargetRow(112, st));
+            Assert.AreEqual(92, FarmOverlay.DoorTargetRow(92, st), "92..95 pass through");
+            Assert.AreEqual(81, FarmOverlay.HouseRow(1, 0));
+            Assert.IsTrue(FarmOverlay.IsYardRow(7));
+            Assert.IsFalse(FarmOverlay.IsYardRow(80));
+        }
+
+        [Test]
+        public void RawPosArgParses()
+        {
+            Assert.IsTrue(FarmOverlay.TryParseRawPos("-4464,4032", out float x, out float z));
+            Assert.AreEqual(-4464f, x); Assert.AreEqual(4032f, z);
+            Assert.IsFalse(FarmOverlay.TryParseRawPos("12", out _, out _));
+            Assert.IsFalse(FarmOverlay.TryParseRawPos(null, out _, out _));
+        }
     }
 }

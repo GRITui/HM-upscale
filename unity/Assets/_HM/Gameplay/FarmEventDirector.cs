@@ -50,6 +50,15 @@ namespace HM.Gameplay
             return any ? n : -1;
         }
 
+        /// <summary>Switches the runner and host to another map (door warps). A map without event data runs an empty file.</summary>
+        public void SetMap(int map)
+        {
+            if (Runner == null || Host == null) return;
+            Host.CurrentMap = map;
+            bool have = EventLoader.TryLoadMap(map, out var file);
+            Runner.SetMap(have ? file : new EventFile { schema = 1 });
+        }
+
         void OnEntered(MapRegionTrigger t, Collider who)
         {
             if (t == null || t.eventId < 0 || Runner == null) return;

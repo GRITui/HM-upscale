@@ -142,7 +142,11 @@ namespace HM.Tests
             // At the measured camera distance one native screen pixel spans distance*tan(fov/2)*2/272 metres.
             float metresPerScreenPixel = FarmCamera.MeasuredOffset.magnitude * 2f
                 * Mathf.Tan(FarmCamera.DerivedVerticalFov * 0.5f * Mathf.Deg2Rad) / FarmCamera.ScreenHeight;
-            Assert.AreEqual(metresPerScreenPixel, HM.Sprites.LoadedSheet.MetresPerPixel, HM.Sprites.LoadedSheet.MetresPerPixel * 0.01f);
+            // The measured framing zoom narrows the lens and SpriteViewScale (0.75) shrinks the sprite world size to match the original.
+            float zoomed = FarmCamera.MeasuredOffset.magnitude * 2f
+                * Mathf.Tan(FarmCamera.FarmVerticalFov * 0.5f * Mathf.Deg2Rad) / FarmCamera.ScreenHeight;
+            Assert.AreEqual(metresPerScreenPixel / FarmCamera.FramingZoom, zoomed, zoomed * 0.01f);
+            Assert.AreEqual(metresPerScreenPixel * HM.Sprites.LoadedSheet.SpriteViewScale, HM.Sprites.LoadedSheet.MetresPerPixel, HM.Sprites.LoadedSheet.MetresPerPixel * 0.01f);
         }
 
         [Test]
@@ -154,6 +158,48 @@ namespace HM.Tests
             var right = inv * Vector3.right;  // +x world
             Assert.Greater(up.x, 0.3f); Assert.Greater(up.y, 0f);
             Assert.Greater(right.x, 0.3f); Assert.Less(right.y, 0f);
+        }
+
+        [Test]
+        public void PadQuantisesToFourAbsoluteFacings()
+        {
+            Assert.AreEqual(0, HM.Characters.PlayerMover.Quantise(new Vector2(0f, 1f)));
+            Assert.AreEqual(1, HM.Characters.PlayerMover.Quantise(new Vector2(1f, 0f)));
+            Assert.AreEqual(2, HM.Characters.PlayerMover.Quantise(new Vector2(0f, -1f)));
+            Assert.AreEqual(3, HM.Characters.PlayerMover.Quantise(new Vector2(-1f, 0f)));
+            Assert.AreEqual(-1, HM.Characters.PlayerMover.Quantise(Vector2.zero));
+            Assert.AreEqual(-1, HM.Characters.PlayerMover.Quantise(new Vector2(0.3f, 0.2f)), "inside the deadzone");
+            // A diagonal never survives: the dominant axis wins, a tie goes vertical.
+            Assert.AreEqual(1, HM.Characters.PlayerMover.Quantise(new Vector2(0.9f, 0.6f)));
+            Assert.AreEqual(0, HM.Characters.PlayerMover.Quantise(new Vector2(0.6f, 0.9f)));
+            Assert.AreEqual(0, HM.Characters.PlayerMover.Quantise(new Vector2(0.707f, 0.707f)));
+        }
+
+        [Test]
+        public void EachFacingMovesAlongItsRawAxisAndReadsOnScreenAsInTheOriginal()
+        {
+            var inv = Quaternion.Inverse(FarmCamera.MeasuredRotation);
+            // facing, expected raw (x,z), expected sign of screen x and y (screen y up)
+            var cases = new[] {
+                (f: 0, x: 0f, z: 1f, sx: 1, sy: 1),   // up    = +z : up and to the right
+                (f: 1, x: 1f, z: 0f, sx: 1, sy: -1),  // right = +x : down and to the right
+                (f: 2, x: 0f, z: -1f, sx: -1, sy: -1),// down  = -z : down and to the left
+                (f: 3, x: -1f, z: 0f, sx: -1, sy: 1), // left  = -x : up and to the left
+            };
+            foreach (var c in cases)
+            {
+                var raw = HM.Characters.PlayerMover.FacingToRaw(c.f);
+                Assert.AreEqual(c.x, raw.x); Assert.AreEqual(c.z, raw.y);
+                var w = HM.Characters.PlayerMover.FacingToWorld(c.f);
+                FarmCoords.ToRaw(w, out float rx, out float rz);
+                Assert.AreEqual(c.x, Mathf.Sign(rx) * (Mathf.Abs(rx) > 1e-3f ? 1f : 0f), 1e-4f);
+                Assert.AreEqual(c.z, Mathf.Sign(rz) * (Mathf.Abs(rz) > 1e-3f ? 1f : 0f), 1e-4f);
+                Assert.AreEqual(1f, w.magnitude, 1e-4f);
+                var s = inv * w;
+                Assert.AreEqual(c.sx, (int)Mathf.Sign(s.x), $"facing {c.f} screen x");
+                Assert.AreEqual(c.sy, (int)Mathf.Sign(s.y), $"facing {c.f} screen y");
+            }
+            Assert.AreEqual(Vector3.zero, HM.Characters.PlayerMover.FacingToWorld(-1));
         }
 
         [Test]
@@ -178,7 +224,7 @@ namespace HM.Tests
                 Assert.AreSame(target.transform, cam.Follow);
                 Assert.IsNull(cam.LookAt, "no aim target: rotation stays fixed");
                 Assert.IsNull(rigGo.GetComponent<CinemachineRotationComposer>());
-                Assert.AreEqual(FarmCamera.DerivedVerticalFov, cam.Lens.FieldOfView, 0.001f);
+                Assert.AreEqual(FarmCamera.FarmVerticalFov, cam.Lens.FieldOfView, 0.001f);
                 Assert.AreEqual(Vector3.zero, follow.TrackerSettings.PositionDamping, "fixed POV: no lag");
                 Assert.AreEqual(FarmCoords.CameraOffset, follow.FollowOffset);
                 Assert.AreEqual(0f, Quaternion.Angle(FarmCamera.MeasuredRotation, rigGo.transform.rotation), 0.001f);

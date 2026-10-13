@@ -109,3 +109,8 @@ semantics per entry (field [1] is passed to FUN_00068804 after the interact stat
 machine in FUN_00041d3c; 0xfffe means event only; arrival and facing are not yet confirmed
 against a warp), town map ids, the 100-entry object list in column 2, and the shared
 column 3 blob.
+
+Door regions (map 0, verified in PlayMode): flags 0x9000 marks a door and `type` is the target map id, so type 80 is
+the farmhouse interior `house_row(season, level)` (row 80 in spring at level 0). The interior door (region 0, flags 0,
+type 0 in a non-yard map) returns to the yard row `farm_row(season, building)`; the exit rule is inferred. Region
+`arrival` is where the player lands in the target map (yard from house: about (-4464, 0, 4032)).

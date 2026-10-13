@@ -16,6 +16,58 @@ namespace HM.World
         /// </summary>
         public const int DefaultRow = 0;
 
+        /// <summary>First interior row (0x50); FUN_00068804 adds season + 4 * level for a door of type 0x50.</summary>
+        public const int HouseBase = 0x50;
+        public const int YardRows = 8;
+
+        /// <summary>
+        /// The state that selects a row. Season is 0..3. BuildingFlag is 0 or 1 (the yard variant). The three levels are
+        /// the DAT_001ae1b6 / 1b8 / 1ba values FUN_00068804 adds for door types 0x50 / 0x60 / 0x70 (house, and the
+        /// two other upgradable buildings; which of 0x60 / 0x70 is which is not decoded).
+        /// </summary>
+        public sealed class RowState
+        {
+            public int Season, BuildingFlag, HouseLevel, Level60, Level70;
+        }
+
+        public static readonly RowState State = new RowState();
+
+        /// <summary>Outdoor yard row for a season and building flag (FUN_0006872c, tools/hmconv/gf.py farm_row). The only place this is computed.</summary>
+        public static int FarmRow(int season, int buildingFlag) => Mathf.Clamp(season, 0, 3) + 4 * Mathf.Clamp(buildingFlag, 0, 1);
+
+        public static int YardRow => FarmRow(State.Season, State.BuildingFlag);
+
+        /// <summary>Farmhouse interior row (FUN_00068804 for type 0x50, gf.house_row).</summary>
+        public static int HouseRow(int season, int level) => HouseBase + Mathf.Clamp(season, 0, 3) + 4 * Mathf.Max(0, level);
+
+        /// <summary>
+        /// Row a door region of the given type leads to (FUN_00068804): 0x50 adds season + 4 * house level, 0x60 and 0x70
+        /// add season + 4 * their level, every other value (92..95 and so on) is the row itself.
+        /// </summary>
+        public static int DoorTargetRow(int type, RowState st)
+        {
+            switch (type)
+            {
+                case 0x50: return HouseRow(st.Season, st.HouseLevel);
+                case 0x60: return 0x60 + Mathf.Clamp(st.Season, 0, 3) + 4 * Mathf.Max(0, st.Level60);
+                case 0x70: return 0x70 + Mathf.Clamp(st.Season, 0, 3) + 4 * Mathf.Max(0, st.Level70);
+                default: return type;
+            }
+        }
+
+        public static bool IsYardRow(int row) => row >= 0 && row < YardRows;
+
+        /// <summary>Parses "x,z" in raw units (the -hm-shot-pos value). False on anything else.</summary>
+        public static bool TryParseRawPos(string s, out float x, out float z)
+        {
+            x = z = 0f;
+            if (string.IsNullOrEmpty(s)) return false;
+            var p = s.Split(',');
+            return p.Length == 2
+                && float.TryParse(p[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                && float.TryParse(p[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out z);
+        }
+
         public sealed class Paths
         {
             public string Root, MapJson, Glb;

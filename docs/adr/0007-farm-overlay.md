@@ -58,3 +58,23 @@ offset (6363, -4500, -6364) raw through `FarmCoords.CameraOffset`: a fixed follo
 looking along the negated offset (yaw 315, pitch 26.57), and `FarmCamera.DerivedVerticalFov` 15.49 degrees
 (derived from H = 1000 and a 272 px screen, not measured). Sprites are 1:1 with the screen in the original, so the
 sprite scale is 10 raw units per pixel. Run is Circle (73 vs 41). The earlier map_080 default was a mistake (it is the farmhouse interior); map_000 is the outdoor yard and shares the player frame, see docs/baseline.md, "Unity vs emulator comparison".
+
+## Update: events, rows and viewpoint (issue 8)
+
+- Movement is absolute d-pad (original FUN_00047754): up is +z, right is +x, four facings, no diagonals; keyboard,
+  gamepad d-pad and stick are quantised to one axis. Pace stays at the metre values above, so the raw pace is 820 raw/s,
+  0.667 of the original 1230 raw/s; accepted consequence of the 1.5x farm, measured in
+  `FarmWalkWarpTests`.
+- Row selection is in one place, `FarmOverlay.FarmRow(season, buildingFlag)` = season + 4 * flag (mirrors
+  `gf.farm_row`); `HouseRow(season, level)` = 0x50 + season + 4 * level (mirrors `gf.house_row`).
+- A region with flags 0x9000 is a door; its type is the target map id (FUN_00068804), so type 80 enters the farmhouse
+  row `HouseRow`. Region 0 with flags 0 and type 0 in a non-yard map is treated as the exit (INFERRED, not decoded) and
+  returns to the yard. Arrival uses the region's arrival point; a 0.75 s warp cooldown prevents bouncing. PlayMode
+  tests walk in through the door (-4776, 4034 -> row 80 near (1377, -842)) and back out (1685, -780 -> row 0 near
+  (-4464, 4032)).
+- Gaps: door condition and arrival facing are not applied; event ids 523, 582, 604 and 630 have no event_s entry;
+  region types 6, 10, 12, 13, 32, 45, 46, 47, 72 are undecoded; the shipping bin region is not wired; whether 0x60 and
+  0x70 are the coop or the barn is not decoded; rows 93..95, 97..99, 113..115 are not exported.
+- Viewpoint: measured against the PPSSPP baseline the H = 1000 lens was 1.5 times too wide; the shipped FOV is 15.49 deg
+  narrowed by `FramingZoom` 1.5 and sprites use `SpriteViewScale` 0.75 (supersedes the 1:1 sprite statement above).
+  Details and the remaining visual deviations are in docs/baseline.md, "Viewpoint match and walk".

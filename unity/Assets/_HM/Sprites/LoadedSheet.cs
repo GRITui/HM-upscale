@@ -15,7 +15,11 @@ namespace HM.Sprites
         public const float BaseMetresPerPixel = RawUnitsPerSpritePixel * HM.World.FarmCoords.DecompiledUnitsToMetres;
         /// <summary>World metres per sprite pixel. Characters scale with the world (FarmCoords.WorldScale, 1.5x by
         /// design) so they stay proportionate to the doors and furniture of the GLB: a 46 px boy is about 3.45 m and is 46 px tall on a 272 px screen, as in the original.</summary>
-        public const float MetresPerPixel = BaseMetresPerPixel * HM.World.FarmCoords.WorldScale;
+        public const float MetresPerPixel = BaseMetresPerPixel * HM.World.FarmCoords.WorldScale * SpriteViewScale;
+        /// <summary>MEASURED against the PPSSPP baseline: at the same position the original boy is about 98 px tall on a
+        /// 544 px high crop (a 46 px sprite at about 1.1 native pixel per sprite pixel on the 272 px screen). With the narrowed
+        /// lens (FarmCamera.FramingZoom 1.5) a 0.75 world scale lands within a few percent of that. One position, rounded.</summary>
+        public const float SpriteViewScale = 0.75f;
 
         public SpriteSheetData Data;
         public Texture2D Texture;

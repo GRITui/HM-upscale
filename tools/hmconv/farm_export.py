@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export the outdoor farm yard rows (maps/map_NNN.json, scenes/farm_NN.glb, scenes_textured/farm_NN.glb).
 
-Rows 0..7 are the yard (gf.farm_row: season + 4 * building variant). Each map JSON carries `entry`, the raw
+Rows 0..7 are the yard (other rows, e.g. the 80..95 interiors, export the same way without an entry) (gf.farm_row: season + 4 * building variant). Each map JSON carries `entry`, the raw
 position where the player stands after leaving the farmhouse, read from region 0 of the matching interior row
 (gf.house_row), which stores it in the yard frame. Output is git-ignored game data.
 Usage: farm_export.py <hmpsp.prx.elf> <seg000.bin> <out-dir> [row ...]
@@ -11,6 +11,8 @@ import gf, scene, scene_glb, texture_glb
 
 
 def entry_for(seg, table, row):
+    if row >= gf.FARM_ROWS * 2:
+        return None  # only yard rows have a farmhouse interior that stores their entry
     hb = seg[table[gf.house_row(row % gf.FARM_ROWS)][0]:table[gf.house_row(row % gf.FARM_ROWS)][1]]
     for g in scene.parse_scene(hb)["regions"]:
         if g["index"] == 0:

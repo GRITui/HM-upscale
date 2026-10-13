@@ -20,6 +20,15 @@ namespace HM.CameraRig
         /// </summary>
         public static readonly float DerivedVerticalFov = 2f * Mathf.Atan(ScreenHeight * 0.5f / RawProjectionH) * Mathf.Rad2Deg;
 
+        /// <summary>
+        /// Framing zoom MEASURED against the PPSSPP baseline (docs/baseline.md, viewpoint match): with the H = 1000 lens the
+        /// barn and mailbox came out 1.42 to 1.52 times narrower on screen than in the original at the same player position,
+        /// so the lens is narrowed by this factor. Rounded to 1.5, from one position (map 0, near the barn door).
+        /// </summary>
+        public const float FramingZoom = 1.5f;
+        /// <summary>The vertical FOV actually used: tan(half) of the H = 1000 lens divided by <see cref="FramingZoom"/>.</summary>
+        public static readonly float FarmVerticalFov = 2f * Mathf.Atan(Mathf.Tan(DerivedVerticalFov * 0.5f * Mathf.Deg2Rad) / FramingZoom) * Mathf.Rad2Deg;
+
         /// <summary>Measured fixed offset from the player (feet) to the camera, in world metres. See FarmCoords.RawCameraOffset.</summary>
         public static Vector3 MeasuredOffset => HM.World.FarmCoords.CameraOffset;
         /// <summary>Rotation looking from the measured offset back at the player: yaw 315 (-45), pitch 26.57 deg down.</summary>
@@ -55,7 +64,7 @@ namespace HM.CameraRig
         {
             cam.Follow = target;
             cam.LookAt = null; // fixed rotation: no aim component, so nothing rotates the camera
-            cam.Lens.FieldOfView = DerivedVerticalFov;
+            cam.Lens.FieldOfView = FarmVerticalFov;
             cam.Lens.NearClipPlane = 1f;
             cam.Lens.FarClipPlane = 500f;
             cam.transform.rotation = MeasuredRotation;

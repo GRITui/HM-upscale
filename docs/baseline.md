@@ -213,3 +213,40 @@ in a 16:9 frame; the captured window letterboxes it.
 - Gotchas: `gpu.*` debugger events hang, so they are not used.
   `screencapture` could not write a movie directly onto the external volume, so
   the script records to the temp dir and moves the file.
+
+## Viewpoint match and walk (map 0, Unity vs PPSSPP)
+
+Method. PPSSPP loaded `assets/hm-baseline/farm.ppst`; the player read (3 x s32 at RAM 0x08950424) as raw
+(-4464, 0, 4032) and the camera eye (3 x s32 at 0x08950418) as (1899, -4500, -2332), so eye minus player is the
+measured (6363, -4500, -6364). Unity: a development player (`BuildScript.BuildMacDevelopment`, git-ignored
+`unity/Build`) run with `-batchmode -hm-shot out.png -hm-shot-delay 15 -hm-shot-size 960x544 -hm-shot-pos -4464,4032`
+and `HM_CONVERTED` pointing at `assets/hm-converted`. The captures stay git-ignored (game imagery); the side by side
+was made with ffmpeg (crop the 480x272 viewport out of the window, scale to 960x544, `hstack`).
+
+Before the fix the H = 1000 lens (15.49 deg) drew the barn and the mailbox 1.42 to 1.52 times narrower than the
+original at the same position (tile, barn and mailbox placement relative to the player were already right, the
+player stood at the barn door in both). Fixes in scope, both MEASURED from this one position and rounded:
+- `FarmCamera.FramingZoom` 1.5: the vertical FOV is `FarmVerticalFov` (about 10.3 deg), not the derived 15.49.
+- `LoadedSheet.SpriteViewScale` 0.75: sprites were about 1.5 times too small once the lens was narrowed.
+
+After the fix, door width / viewport width is 0.10 (original) vs 0.104 (Unity), the player feet sit at 50% / 50%
+of the viewport height in both, the mailbox position relative to the door matches, and the player is 98 px tall on
+the 544 px crop in the original vs about 95 in Unity. Remaining differences (visual notes, no pixel diff claimed):
+- Grass is darker and less saturated in Unity (lighting and colour space, not tuned); dirt patches line up.
+- The original shows a wooden fence and a sign next to the HUD at the top right; Unity draws the fence posts black
+  there (missing alpha or material on the fence) and the HUD is a Unity placeholder.
+- Unity adds the placeholder box, cow and a demo NPC that are not in the original frame.
+- The original player is a blue-capped boy; the Unity sprite is a different, orange-haired placeholder sheet.
+- Still one position only; the FOV is an empirical fit, not a decoded value.
+
+Scripted walk (PlayMode `FarmWalkWarpTests.HeldRightMovesPlusXAtTheDecompiledPace`): holding D for 1.0 s of
+simulation time moves the player +820.0 raw units along +x with 0.0 z drift (ratio 1.000 to the documented pace
+6.15 m/s). The original walks 41 raw units per 30 Hz update, 1230 raw/s, so the Unity pace is 0.667 of the original.
+This is the ADR 0007 consequence of building the farm 1.5x larger while keeping the metre pace; the pace is not
+raised to 1230 raw/s on purpose (design decision), so this deviation is expected and recorded here.
+
+Seasons. All eight yard rows load and render textured in the player (`-hm-farm-season 0..3` with and without
+`-hm-farm-building 1`; rows 0..7 = map_000..map_007, about 31.0k to 31.3k walkable cells, 24 regions each):
+spring green, summer olive, autumn, winter snow cover; rows 4..7 (building flag) show the extended building. The
+barn doorway renders as a black opening in rows 3..7 (closed door model in rows 0..2); the interior behind it is not
+modelled, so this is an unlit hole rather than a texture failure.

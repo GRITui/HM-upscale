@@ -4,7 +4,11 @@ using UnityEngine.InputSystem;
 
 namespace HM.Characters
 {
-    /// <summary>CharacterController mover driven by the Input System. Moves relative to the camera.</summary>
+    /// <summary>
+    /// CharacterController mover driven by the Input System. Like the original (FUN_00047754) it moves along the
+    /// absolute raw axes, one axis at a time, in four facings only: up = +z, right = +x, down = -z, left = -x in the
+    /// raw frame, converted through <see cref="FarmCoords"/>. It is not camera-relative and has no diagonals.
+    /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerMover : MonoBehaviour
     {
@@ -23,7 +27,6 @@ namespace HM.Characters
         CharacterController controller;
         InputAction move;
         InputAction run;
-        Transform cam;
         float verticalVelocity;
 
         void Awake()
@@ -37,6 +40,7 @@ namespace HM.Characters
             move.AddCompositeBinding("2DVector")
                 .With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow")
                 .With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
+            move.AddBinding("<Gamepad>/dpad");
             move.AddBinding("<Gamepad>/leftStick");
             run = new InputAction("Run", InputActionType.Button);
             // Run is Circle on the original pad (bit 0x20, docs/baseline.md); on an Xbox-style pad that is buttonEast.
@@ -51,9 +55,7 @@ namespace HM.Characters
 
         void Update()
         {
-            if (cam == null && Camera.main != null) cam = Camera.main.transform;
-            Vector2 input = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1f);
-            Vector3 dir = ToWorldDirection(input, cam != null ? cam.eulerAngles.y : 0f);
+            Vector3 dir = FacingToWorld(Quantise(move.ReadValue<Vector2>()));
             float speed = run.IsPressed() ? runSpeed : walkSpeed;
 
             verticalVelocity = controller.isGrounded ? -1f : verticalVelocity + gravity * Time.deltaTime;
@@ -67,11 +69,43 @@ namespace HM.Characters
             }
         }
 
-        /// <summary>Converts a 2D stick vector to a world direction relative to a camera yaw in degrees.</summary>
-        public static Vector3 ToWorldDirection(Vector2 input, float cameraYawDegrees)
+        /// <summary>Stick magnitude on the dominant axis below which no direction registers.</summary>
+        public const float Deadzone = 0.5f;
+
+        /// <summary>
+        /// Quantises a pad/keyboard vector (x right, y up) to one of the original's four facings:
+        /// 0 = +z (up), 1 = +x (right), 2 = -z (down), 3 = -x (left), or -1 for none. The dominant axis wins;
+        /// a tie goes to the vertical axis. The tie rule and the stick deadzone are choices, not decoded values.
+        /// </summary>
+        public static int Quantise(Vector2 input)
         {
-            var yaw = Quaternion.Euler(0f, cameraYawDegrees, 0f);
-            return yaw * new Vector3(input.x, 0f, input.y);
+            float ax = Mathf.Abs(input.x), ay = Mathf.Abs(input.y);
+            if (Mathf.Max(ax, ay) < Deadzone) return -1;
+            if (ay >= ax) return input.y > 0f ? 0 : 2;
+            return input.x > 0f ? 1 : 3;
+        }
+
+        /// <summary>Raw (x, z) step direction of a facing, the movement-table order of the original.</summary>
+        public static Vector2 FacingToRaw(int facing)
+        {
+            switch (facing)
+            {
+                case 0: return new Vector2(0f, 1f);
+                case 1: return new Vector2(1f, 0f);
+                case 2: return new Vector2(0f, -1f);
+                case 3: return new Vector2(-1f, 0f);
+                default: return Vector2.zero;
+            }
+        }
+
+        /// <summary>World-space unit direction of a facing, converted once through <see cref="FarmCoords"/>.</summary>
+        public static Vector3 FacingToWorld(int facing)
+        {
+            Vector2 r = FacingToRaw(facing);
+            if (r == Vector2.zero) return Vector3.zero;
+            Vector3 w = FarmCoords.ToWorld(r.x, 0f, r.y);
+            w.y = 0f;
+            return w.normalized;
         }
     }
 }
