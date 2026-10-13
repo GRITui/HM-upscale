@@ -61,7 +61,7 @@ a read:
 | frames held | x change |
 |---|---|
 | 20 | 410 |
-| 40 | 820 (one run reached 810 with a start offset; a second 40f run 5494 to 6314 = 820) |
+| 40 | 820 |
 | 60 | 1230 |
 
 That is 20.5 units per held frame, linear in hold time, so about 1230 units per
