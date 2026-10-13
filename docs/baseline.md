@@ -30,8 +30,23 @@ only numbers and prose.
 5. Result: the player stands in the farmhouse with control, HUD reading
    "2 Mon AM 6:00".
 
-Extra presses in the farmhouse are harmless. A savestate could skip all this;
-none was created.
+Extra presses in the farmhouse are harmless. The sequence also meets a Mayor
+scene, and the first exit from the house triggers a police cutscene that needs
+more `cross` presses; the 5 PM shipper scene follows on the first day.
+
+### Savestates (skip the sequence)
+
+PPSSPP has no debugger event for savestates, so they use hotkeys: F2 saves and
+F4 loads, posted with `key.swift` (compile: `swiftc key.swift -o /tmp/hmkey`;
+the game window must be frontmost; keycodes F2=120, F4=118). A farm-outdoors
+state lives at `assets/hm-baseline/farm.ppst` (git-ignored). Load it at launch:
+
+    tools/baseline/launch.sh <iso> <outdir> <state.ppst>
+    tools/baseline/capture.py --iso <iso> --state assets/hm-baseline/farm.ppst
+
+Not verified: a fully unattended `capture.py` run end to end. The `--state`
+path is new and untested as a whole; the old farmhouse walk test still runs
+afterwards and is not outdoor-aware.
 
 ## What was captured
 
@@ -46,33 +61,50 @@ none was created.
 
 ## Measured values
 
-Clock addresses are RAM = 0x08804000 + ELF vaddr.
+Clock addresses are RAM = 0x08804000 + ELF vaddr. Clock: six u16 at +0x1AE1A0
+(year, season, day, weekday, hour, minute). Position: three s32 at 0x08950418.
 
 **Tick / frame rate.** The CPU tick counter advances about 2.22e8 per wall
-second (trace over 60 s: 2.2201e8; idle 10 s test: 2.22e8). That matches the
-PSP's 222 MHz clock, so emulation ran at 1.0x real time. At the usual 60 fps
-that is about 3.7e6 ticks per frame. The tick counter does not directly count
-frames, so 60 fps is inferred, not read from the game.
+second, the PSP's 222 MHz, so emulation ran at 1.0x. Sixteen blocking frames
+took 0.267 s, which supports 60 fps (still inferred, not read from the game).
 
-**Walk speed.** Position is three s32 at 0x08950418 (x, constant y = -4500, z).
-Horizontal runs in the open part of the farmhouse, from a blocking press, then
-a read:
+**Clock rate (outdoors).** 2.00 game minutes per emulated second (about 0.033
+per frame). The clock freezes during dialogue and events. Measured with
+`measure_clock.py` as the slope across several blocking presses. Confidence: high.
 
-| frames held | x change |
-|---|---|
-| 20 | 410 |
-| 40 | 820 |
-| 60 | 1230 |
+**Walk speed (outdoors).** 20.5 raw units per frame, about 1229 per second at
+60 fps; the same value as indoors. Confidence: high for the raw number.
 
-That is 20.5 units per held frame, linear in hold time, so about 1230 units per
-second at 60 fps. Left and right are symmetric. Vertical (z) moves were cut off
-by furniture and walls (410, then 451 and 533 for longer holds), so only the
-first 20-frame step is a clean 410 (also 20.5 per frame). If 4096 is 1.0 world
-unit, this is about 0.30 units per second; the unit scale is unconfirmed.
+**D-pad axes.** Down is -z, up is +z, left is -x, right is +x.
 
-**Clock.** Stayed at year 0, spring, day 1, Monday, 06:00 for all 60 s traced
-and during all walking. The clock does not run inside the house in the intro, so
-the minutes-per-frame rate remains untested.
+**Run and diagonal.** No run button was found (triangle opens the rucksack,
+select holds the map). Diagonal trials moved only one axis; that is
+inconclusive, since walls or axis priority could explain it. Unmeasured.
+
+**Yard bounds.** Walkable x runs roughly -637 to 2110..2475 and z roughly
+-4479 to -1944. Walking up past z=-1944 near x=2110 changes map (arrives at
+about 7495, -11430).
+
+**Unit scale.** Not proven. Player coordinates sit in a different frame from
+the map_080 scene (terrain x -1800..1800, z -1768..1800), and no landmark
+matched. The farm is about 36 m wide at 0.01, but 1229 units/s would be
+12.3 m/s walking, which is implausible as metres. So FarmCoords scale 0.01 and
+MirrorX are unconfirmed assumptions, not contradicted by position, and probably
+wrong for speed. Unity keeps them unchanged; walking pace was tuned to the
+measured raw speed times 0.01.
+
+**Press-duration caveat.** The debugger press `duration` is not an exact frame
+count, and menus or events swallow the first input. Use slopes across several
+presses (as the measure scripts do) rather than single readings. Held movement
+via `input.buttons.send` only moves if re-sent about every 30 ms.
+
+### Retuned in Unity
+
+- `PlayerMover` walk 12.3 (was 3.5), run 20.5 (was 6); run is walk times 20/12
+  (low confidence).
+- `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.01.
+- Game clock stays at 2 minutes per real second (matches the measurement).
+- Camera: not measured, unchanged.
 
 ## Camera POV
 
@@ -86,12 +118,12 @@ in a 16:9 frame; the captured window letterboxes it.
 
 ## Unanswered
 
-- Minutes of game time per real second (clock frozen indoors in the intro).
-- Walk speed outdoors, running speed, and diagonal movement.
-- Meaning of the y value (-4500, constant) and the unit scale.
-- How d-pad directions map to world axes once the camera turns elsewhere.
-- Exact frame rate read from the game (60 fps is inferred from the CPU clock).
-- Colliders: the farmhouse furniture stopped vertical movement; the shapes are unmeasured.
+- True unit scale and mirroring (raw units to metres), and the walking speed in metres.
+- Run speed and diagonal movement.
+- Camera pitch, yaw and distance outdoors.
+- Exact frame rate read from the game.
+- Unattended end-to-end `capture.py` run.
+- Collider shapes.
 
 ## Permissions
 

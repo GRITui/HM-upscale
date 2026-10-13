@@ -6,6 +6,8 @@ namespace HM.Core
     [DefaultExecutionOrder(-100)]
     public sealed class GameClockBehaviour : MonoBehaviour
     {
+        // 2.00 game minutes per emulated second, sampled for minutes on the original (docs/baseline.md);
+        // confidence high. Frozen during dialogue and events in the original.
         [SerializeField] float minutesPerRealSecond = 2f;
         [SerializeField] float startHour = 6f;
 

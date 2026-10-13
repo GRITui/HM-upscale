@@ -121,8 +121,10 @@ namespace HM.Gameplay
         }
 
         // ---- walking ----
-        /// <summary>Metres per second at the walk speed code (12). Other codes scale linearly (run is 20).</summary>
-        public const float WalkMetresPerSecond = 3.5f;
+        /// <summary>Metres per second at the walk speed code (12). Other codes scale linearly (run is 20).
+        /// Measured 1230 raw units/s (20.5 per frame at 60 fps) outdoors on the original, times the 0.01 unit
+        /// scale. Source: docs/baseline.md; confidence high for the raw speed, low for the metre value.</summary>
+        public const float WalkMetresPerSecond = 1230f * 0.01f;
         public const int WalkSpeedCode = 12;
         /// <summary>A walk that makes no progress for this long is abandoned so a script never stalls on a wall.</summary>
         public const float BlockedTimeout = 0.75f;

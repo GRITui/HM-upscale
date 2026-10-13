@@ -48,6 +48,8 @@ namespace HM.Tests.PlayMode
             dirGo = new GameObject("TestDirector");
             dir = dirGo.AddComponent<FarmEventDirector>();
             dir.Init(player.transform, 999);
+            simRun = false;
+            dir.Host.DeltaTime = () => simRun ? SimStep : 0f; // walk time only passes inside Sim(): batch mode runs thousands of fps
             var file = EventFile.Single(cmds);
             dir.Runner.EventMapLoader = id => id == eventId ? file : null;
             trigger = new GameObject("TestTrigger");
@@ -56,6 +58,25 @@ namespace HM.Tests.PlayMode
             box.isTrigger = true; box.size = new Vector3(4, 4, 4);
             var t = trigger.AddComponent<MapRegionTrigger>();
             t.eventId = eventId;
+        }
+
+        const float SimStep = 0.02f;
+
+        bool simRun;
+
+        /// <summary>Lets the event start (physics), then advances the walk clock by the given simulated seconds
+        /// at SimStep per rendered frame, so results do not depend on the batch-mode frame rate.</summary>
+        IEnumerator Sim(float seconds)
+        {
+            var cc = player.GetComponent<CharacterController>();
+            for (int i = 0; i < 10 && !dir.Runner.Busy; i++)
+            {
+                if (cc != null && cc.enabled && player.transform.position.x == 0f) cc.Move(new Vector3(0, 0.001f, 0));
+                yield return new WaitForFixedUpdate();
+            }
+            simRun = true;
+            for (int i = 0, n = Mathf.RoundToInt(seconds / SimStep); i < n; i++) yield return null;
+            simRun = false;
         }
 
         IEnumerator Frames(int n)
@@ -134,7 +155,7 @@ namespace HM.Tests.PlayMode
             Assert.IsTrue(dir.Runner.Busy, "still walking");
             Assert.AreEqual(0, dir.Runner.State.GetFlag(1), "script waits for arrival");
             Assert.Less(player.transform.position.z, 1.9f, "not teleported");
-            yield return new WaitForSeconds(1.5f);
+            yield return Sim(1.5f);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script resumed after arrival");
             Assert.AreEqual(2f, player.transform.position.z, 0.02f);
         }
@@ -143,7 +164,7 @@ namespace HM.Tests.PlayMode
         public IEnumerator MoveActorHonoursMirroredX()
         {
             Build(7, Move(0, 0x29, 1, 300), C(19, 0x31, 0, 1, 0));
-            yield return new WaitForSeconds(1.5f);
+            yield return Sim(1.5f);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
             Assert.AreEqual(-3f, player.transform.position.x, 0.02f, "raw +x is world -x");
         }
@@ -151,11 +172,11 @@ namespace HM.Tests.PlayMode
         [UnityTest]
         public IEnumerator Op82RunsFasterThanWalk()
         {
-            Build(7, Move(82, 0x29, 0, 1000));
-            yield return new WaitForSeconds(1f);
+            Build(7, Move(82, 0x29, 0, 5000));
+            yield return Sim(1f);
             float run = player.transform.position.z;
             Assert.Greater(run, FarmEventHost.WalkMetresPerSecond * 1.2f, "faster than a walk covers in the same time");
-            Assert.Less(run, 8f);
+            Assert.Less(run, FarmEventHost.WalkMetresPerSecond * 20f / 12f * 1.2f);
         }
 
         [UnityTest]
@@ -165,7 +186,7 @@ namespace HM.Tests.PlayMode
             var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             wall.transform.position = new Vector3(0, 1f, 2.5f);
             wall.transform.localScale = new Vector3(4, 4, 1);
-            yield return new WaitForSeconds(2.5f);
+            yield return Sim(2.5f);
             Object.Destroy(wall);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script continued after the blocked walk");
             Assert.Less(player.transform.position.z, 1.6f, "wall honoured");
@@ -189,7 +210,7 @@ namespace HM.Tests.PlayMode
             var npc = new GameObject("TestNpc");
             npc.transform.position = new Vector3(3, 1f, 0);
             dir.Host.Register(5, npc.transform);
-            yield return new WaitForSeconds(1.2f);
+            yield return Sim(1.2f);
             Object.Destroy(npc);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
             Assert.AreEqual(1f, npc.transform.position.z, 0.02f);

@@ -7,8 +7,12 @@ namespace HM.Characters
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerMover : MonoBehaviour
     {
-        [SerializeField] float walkSpeed = 3.5f;
-        [SerializeField] float runSpeed = 6f;
+        // Measured in the original (docs/baseline.md): 20.5 raw units per frame at 60 fps = 1230 units/s
+        // = 12.3 m/s at FarmCoords.UnitsToMetres 0.01 (source: PPSSPP RAM trace, confidence high for the raw
+        // speed, low for the metre value because the unit scale is unproven). Run is the walk speed times the
+        // script speed ratio 20/12 (source: event VM speed codes, confidence low: no run button was observed).
+        [SerializeField] float walkSpeed = 12.3f;
+        [SerializeField] float runSpeed = 20.5f;
         [SerializeField] float turnSharpness = 14f;
         [SerializeField] float gravity = -20f;
 

@@ -133,6 +133,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--iso")
     ap.add_argument("--attach", action="store_true")
+    ap.add_argument("--state", help="savestate to load at launch; skips the new-game key sequence")
     ap.add_argument("--out", default=os.path.join(HERE, "..", "..", "assets", "hm-baseline"))
     ap.add_argument("--video-seconds", type=int, default=60)
     ap.add_argument("--skip-video", action="store_true")
@@ -143,12 +144,15 @@ def main():
     if not a.attach:
         if not a.iso:
             ap.error("--iso is required unless --attach is given")
-        subprocess.run([os.path.join(HERE, "launch.sh"), a.iso, out], check=True)
+        subprocess.run([os.path.join(HERE, "launch.sh"), a.iso, out] + ([a.state] if a.state else []), check=True)
     s = Session(out) if a.attach else None
     if not a.attach:
         time.sleep(1)
         s = Session(out)
-        boot_to_farmhouse(s)
+        if a.state:
+            time.sleep(8)  # let the state finish loading
+        else:
+            boot_to_farmhouse(s)
 
     # Frame/tick evidence: CPU tick counter against wall time while idle.
     t0, k0 = time.time(), s.ticks()

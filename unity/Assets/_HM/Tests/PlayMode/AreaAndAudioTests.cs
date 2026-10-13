@@ -48,7 +48,8 @@ namespace HM.Tests.PlayMode
             var op = SceneManager.LoadSceneAsync("Boot", UnityEngine.SceneManagement.LoadSceneMode.Single);
             while (!op.isDone) yield return null;
             // Boot's GameStartup loads SliceFarm additively on Start.
-            for (int i = 0; i < 300 && !(GameStartup.Areas != null && GameStartup.Areas.IsLoaded("SliceFarm")); i++) yield return null;
+            float until = Time.realtimeSinceStartup + 20f; // real time: batch mode renders thousands of frames per second
+            while (Time.realtimeSinceStartup < until && !(GameStartup.Areas != null && GameStartup.Areas.IsLoaded("SliceFarm"))) yield return null;
             Assert.IsNotNull(GameStartup.Areas);
             Assert.IsTrue(GameStartup.Areas.IsLoaded("SliceFarm"));
             Assert.AreEqual("SliceFarm", SceneManager.GetActiveScene().name);
