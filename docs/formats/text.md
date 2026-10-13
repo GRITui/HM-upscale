@@ -57,7 +57,7 @@ text: seg002 1798, seg003 1957, seg004 631, seg005 1387, seg006 56. Strings cont
 
 ## Not solved
 - The English 8x12 font page location.
-- How MesEv (seg029, gf.bin column 3) selects an entry index (opcode not yet found).
+- How MesEv (seg029, gf.bin column 3) selects an entry index (op 2 uses messege0..4 only, see event.md; MesEv linkage still unknown).
 - Remaining glyph codes 0x1B-0x1E, 0x6D-0x6F, 0x71, 0x82-0x8A (icons/symbols), and the
   apostrophe ligatures 0x50-0x56.
 - Other languages and the kana/kanji range (English build only seen).
