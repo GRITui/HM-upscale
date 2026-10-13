@@ -13,7 +13,7 @@ derive from the user's own disc image and are git-ignored. They must never be co
 - `HM.Gameplay.FarmOverlayBootstrap` hooks `SceneManager.sceneLoaded` for the scene
   `SliceFarm`. No scene file changes and no ProjectSettings changes are needed.
 - Converted root: env `HM_CONVERTED`, then `<repo>/assets/hm-converted`. Env
-  `HM_FARM_OVERLAY=0` disables the overlay. The default row is 80.
+  `HM_FARM_OVERLAY=0` disables the overlay. The default row is 80. The game derives the farm row as 0x50 + season + 4*variant (high confidence), so rows 80..95 are the 4 seasons x 4 variants.
 - Missing JSON, a parse error, or missing terrain each log one `[HM-FARM]` line and leave
   the placeholder slice untouched. A missing GLB keeps the collision floor visible.
 - Raw terrain (`cell`, `origin`, null = blocked) goes through `WalkGrid`: a MeshCollider floor

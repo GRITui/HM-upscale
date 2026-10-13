@@ -29,6 +29,10 @@ namespace HM.Tests.PlayMode
         static ScriptCommand Dialog(int channel, int entry, int resultVar)
             => new ScriptCommand { op = 2, done = 255, wait = 0, @yield = 1, p = new[] { channel, entry, resultVar, 0 } };
 
+        // A move polls itself until it arrives: wait 0 = this command, yield 1.
+        static ScriptCommand Move(int op, int actor, int dir, int target, int p4 = 0)
+            => new ScriptCommand { op = op, done = 255, wait = 0, @yield = 1, p = new[] { actor, dir, target, p4 } };
+
         [TearDown]
         public void Cleanup()
         {
@@ -120,6 +124,75 @@ namespace HM.Tests.PlayMode
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script continued past the stubs");
             CollectionAssert.Contains(dir.Host.StubLog, "engine op 8 (-2,0,0,0)");
             CollectionAssert.Contains(dir.Host.StubLog, "camera_move");
+        }
+
+        [UnityTest]
+        public IEnumerator MoveActorWalksPlayerAlongZUntilArrived()
+        {
+            Build(7, Move(0, 0x29, 0, 200), C(19, 0x31, 0, 1, 0));
+            yield return Frames(3);
+            Assert.IsTrue(dir.Runner.Busy, "still walking");
+            Assert.AreEqual(0, dir.Runner.State.GetFlag(1), "script waits for arrival");
+            Assert.Less(player.transform.position.z, 1.9f, "not teleported");
+            yield return new WaitForSeconds(1.5f);
+            Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script resumed after arrival");
+            Assert.AreEqual(2f, player.transform.position.z, 0.02f);
+        }
+
+        [UnityTest]
+        public IEnumerator MoveActorHonoursMirroredX()
+        {
+            Build(7, Move(0, 0x29, 1, 300), C(19, 0x31, 0, 1, 0));
+            yield return new WaitForSeconds(1.5f);
+            Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
+            Assert.AreEqual(-3f, player.transform.position.x, 0.02f, "raw +x is world -x");
+        }
+
+        [UnityTest]
+        public IEnumerator Op82RunsFasterThanWalk()
+        {
+            Build(7, Move(82, 0x29, 0, 1000));
+            yield return new WaitForSeconds(1f);
+            float run = player.transform.position.z;
+            Assert.Greater(run, FarmEventHost.WalkMetresPerSecond * 1.2f, "faster than a walk covers in the same time");
+            Assert.Less(run, 8f);
+        }
+
+        [UnityTest]
+        public IEnumerator MoveActorStopsAtWallAndDoesNotStall()
+        {
+            Build(7, Move(0, 0x29, 0, 500), C(19, 0x31, 0, 1, 0));
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.transform.position = new Vector3(0, 1f, 2.5f);
+            wall.transform.localScale = new Vector3(4, 4, 1);
+            yield return new WaitForSeconds(2.5f);
+            Object.Destroy(wall);
+            Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script continued after the blocked walk");
+            Assert.Less(player.transform.position.z, 1.6f, "wall honoured");
+            CollectionAssert.Contains(dir.Host.StubLog, "move_actor blocked");
+        }
+
+        [UnityTest]
+        public IEnumerator MoveActorUnregisteredNpcAndVerticalComplete()
+        {
+            Build(7, Move(0, 5, 0, 200), Move(0, 0x29, -2, 100), C(19, 0x31, 0, 1, 0));
+            yield return Frames(6);
+            Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
+            CollectionAssert.Contains(dir.Host.StubLog, "move_actor npc 5 (no body)");
+            CollectionAssert.Contains(dir.Host.StubLog, "move_actor vertical");
+        }
+
+        [UnityTest]
+        public IEnumerator MoveActorWalksRegisteredNpc()
+        {
+            Build(7, Move(0, 5, 0, 100), C(19, 0x31, 0, 1, 0));
+            var npc = new GameObject("TestNpc");
+            npc.transform.position = new Vector3(3, 1f, 0);
+            dir.Host.Register(5, npc.transform);
+            yield return new WaitForSeconds(1.2f);
+            Object.Destroy(npc);
+            Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
+            Assert.AreEqual(1f, npc.transform.position.z, 0.02f);
         }
 
         [Test]

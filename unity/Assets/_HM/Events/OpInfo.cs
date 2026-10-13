@@ -4,11 +4,11 @@ namespace HM.Events
     public static class OpInfo
     {
         public const int Count = 113;
-        const string Confidence = "HHHMHHHMMMMMMHHHHHUHHHHMMMMMMMMMMLHMHMMUMLMMLLMMLLMMMMMMHMMMHHLLMLHLLHMMLHHLHLMHHMLLHLLHMULMLLHULMLMHLLMHMULLLLLL";
+        const string Confidence = "HHHMHHHMMMMMMHHHHHUHHHHMMMMMMMMMMLHMHMMUMLMMLLMMLLMMMMMMHMMMHHLLMLHLLHMMLHHLHLMHHMMLHLLHMULMLLHULMLMHLLMHMULLLLLL";
         static readonly string[] Names =
         {
             "move_axis", "move_anim", "dialog", "frame_timer", "set_pos", "anim",
-            "set_hidden", "actor_map", "camera_mode", "camera_move", "camera_release", "sleep_trigger",
+            "set_hidden", "actor_map", "set_next_location", "camera_move", "camera_release", "sleep_trigger",
             "face_player", "cond_field", "cond_field_var", "cond_var", "cond_var_var", "cond_range",
             "op18", "set_field", "set_field_var", "var_set", "var_from_field", "wait_transition",
             "bgm_play", "bgm_default", "bgm_fade", "screen_fade", "input_lock", "item_count",
@@ -19,8 +19,8 @@ namespace HM.Events
             "slot_offset", "slot_to_var", "check_mode3", "npc_pref_var", "item_pair_to_var", "check_state",
             "set_pos_vars", "set_player_pos", "camera_scroll", "emote", "set_face", "gift_event",
             "event_flag", "npc_unlocked", "call_vars", "save_bits", "sfx", "actor_clear_flags",
-            "call_vars2", "actor_pos_to_vars", "event_pos_to_vars", "pending_check", "wait_until_time", "ui_wait",
-            "actor_init", "return_addr_to_var", "return_jump", "big_switch", "actor_effect2", "actor_move_dir",
+            "camera_scroll_vars", "actor_pos_to_vars", "event_pos_to_vars", "pending_check", "wait_until_time", "fade_wait",
+            "actor_init", "return_addr_to_var", "return_jump", "big_switch", "move_run", "actor_stop_face",
             "flag_triplet", "table_lookup", "scatter", "cond_field_by_var", "set_field_by_var", "op89",
             "party_choreo", "set_field_all", "lookup_a", "call3", "actor_cell", "op95",
             "big_switch2", "set_field_visible", "menu_result", "mode_wait", "register_pair", "pick_candidates",

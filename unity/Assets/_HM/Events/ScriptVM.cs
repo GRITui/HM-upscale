@@ -251,9 +251,11 @@ namespace HM.Events
                 case 62:
                 case 63:
                 case 77:
-                case 82:
                 case 83:
                     return host.Engine(c.op, p1, p2, p3, p4, begin, State);
+                case 82:
+                    // Same axis move as op 1 but at the run speed code (20).
+                    return host.MoveActor(p1, p2, p3, 20, p4, begin);
                 case 10: ScriptRelease(p1, p2); return true;
                 case 11: return SleepTrigger(p1, p2, p3, p4);
                 case 40:

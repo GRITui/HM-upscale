@@ -55,7 +55,7 @@ flag (kind - 0x30). Accessor table at ELF 0x1383a0 (20-byte entries). Full list:
 | 5 | anim | actor, anim, param, immediate | high |
 | 6 | set_hidden | actor, hide(0 hides), actor_is_var, - | high |
 | 7 | actor_map | actor, map(-1 current), store_var(-1 none), reset | med |
-| 8 | camera_mode | flags | low |
+| 8 | set_next_location | target, season_relative, flag_a, flag_b | med |
 | 9 | camera_move | speed_sel, y, x, z | med |
 | 10 | camera_release | flags | low |
 | 11 | sleep_trigger | - | low |
@@ -119,18 +119,18 @@ flag (kind - 0x30). Accessor table at ELF 0x1383a0 (20-byte entries). Full list:
 | 69 | save_bits | mode(0 test,1 set,else clear), wide, mask, - | low |
 | 70 | sfx | id | med |
 | 71 | actor_clear_flags | actor(42 all), mode | med |
-| 72 | call_vars2 | a, var, var, var | low |
+| 72 | camera_scroll_vars | a, var, var, var | low |
 | 73 | actor_lookup | actor, actor2 | unknown |
 | 74 | time_to_vars | mode, var, var, var | low |
 | 75 | pending_check | mode, index, store_var | low |
 | 76 | wait_until_time | hour, minute, absolute, bits(1,2 = vars) | high |
-| 77 | ui_wait | mode, id, flag | low |
+| 77 | fade_wait | mode, id, flag | low |
 | 78 | actor_init | actor | med |
 | 79 | script_index_to_var | var | med |
 | 80 | script_index_from_var | var | med |
 | 81 | big_switch | case, sub, a, b | low |
-| 82 | dialog_helper | a, b, c, d | unknown |
-| 83 | actor_move_dir | actor, anim, param, mode | low |
+| 82 | move_run | actor, dir, target, anim | med |
+| 83 | actor_stop_face | actor, anim, param, mode | low |
 | 84 | flag_triplet | 0/1/other | med |
 | 85 | table_lookup | var, var | low |
 | 86 | scatter | actor, var, -, var | low |

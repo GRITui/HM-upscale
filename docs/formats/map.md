@@ -2,7 +2,7 @@
 
 Status: container PARTIAL-SOLVED (high confidence: offset table, block table, image and
 sprite blocks parse to exact block ends over all 439 non-empty maps sampled). Event script
-opcodes UNSOLVED. Tile layers, collision grid, farm map id: NOT FOUND. Parser:
+opcodes UNSOLVED. Tile layers, collision grid: NOT FOUND. Farm map id: row 0x50 + season + 4*variant (high). Parser:
 tools/hmconv/map.py. Loader: FUN_00058da0, block walkers FUN_00058b9c / FUN_000588bc.
 
 Index: 452 u32 LE offsets at ELF file offset 0x137b74+0x74 (vaddr 0x137b74). Map id i
@@ -39,7 +39,7 @@ yet decoded. The special maps 0x15f-0x190 use an escape-RLE path (FUN_00058cf0: 
 byte is the escape; esc,val,count emits val count times) with sizes from a table at
 0x138284.
 
-Unknown: farm map id, collision, opcode table, flags word meaning.
+Unknown: collision, opcode table, flags word meaning.
 
 ## Correction: scenes are 3D (gf.bin), not pre-rendered tiles
 

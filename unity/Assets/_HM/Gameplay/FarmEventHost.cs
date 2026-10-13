@@ -120,8 +120,69 @@ namespace HM.Gameplay
             GetActorPos(actor, out _, out x, out z);
         }
 
+        // ---- walking ----
+        /// <summary>Metres per second at the walk speed code (12). Other codes scale linearly (run is 20).</summary>
+        public const float WalkMetresPerSecond = 3.5f;
+        public const int WalkSpeedCode = 12;
+        /// <summary>A walk that makes no progress for this long is abandoned so a script never stalls on a wall.</summary>
+        public const float BlockedTimeout = 0.75f;
+
+        sealed class Walk { public float stuck; }
+        readonly Dictionary<int, Walk> walks = new Dictionary<int, Walk>();
+        readonly Dictionary<int, Transform> npcs = new Dictionary<int, Transform>();
+
+        /// <summary>Delta time source; tests inject a fixed step.</summary>
+        public Func<float> DeltaTime = () => Time.deltaTime;
+
+        /// <summary>Gives a non-player actor a body so scripted moves walk it; unregistered actors stay logged stubs.</summary>
+        public void Register(int actor, Transform body) { if (body != null) npcs[actor] = body; else npcs.Remove(actor); }
+
+        Transform BodyOf(int actor) => IsPlayer(actor) ? player : (npcs.TryGetValue(actor, out var t) ? t : null);
+
+        /// <summary>
+        /// Walks an actor along one axis toward an absolute raw coordinate, honouring collision, and completes on
+        /// arrival. dir: 0 +z, 1 +x, 2 -z, 3 -x (raw axes; world x is mirrored). Vertical codes (-1, -2) complete at once.
+        /// speed &lt;= 0 means the walk speed. The tick rate of the original is unknown, so the pace is tuned to the
+        /// player's walk speed rather than derived.
+        /// </summary>
         public override bool MoveActor(int actor, int dir, int target, int speed, int anim, bool begin)
-        { if (begin) Stub("move_actor " + (IsPlayer(actor) ? "player" : "npc")); return true; }
+        {
+            if (dir < 0 || dir > 3) { if (begin) Stub("move_actor vertical"); return true; }
+            var body = BodyOf(actor);
+            if (body == null) { if (begin) Stub("move_actor npc " + actor + " (no body)"); return true; }
+            if (begin) walks[actor] = new Walk();
+            if (!walks.TryGetValue(actor, out var w)) { w = new Walk(); walks[actor] = w; }
+
+            bool alongX = dir == 1 || dir == 3;
+            float sign = dir == 0 || dir == 1 ? 1f : -1f;
+            float unit = HM.World.FarmCoords.UnitsToMetres;
+            bool mirror = HM.World.FarmCoords.MirrorX;
+            Vector3 pos = body.position;
+            // Current coordinate in raw units on the walked axis.
+            float cur = alongX ? (mirror ? -pos.x : pos.x) / unit : pos.z / unit;
+            float remaining = sign * (target - cur) * unit;          // metres still to walk in the walking sense
+            if (remaining <= 0.005f) { walks.Remove(actor); return true; }
+
+            float code = speed <= 0 ? WalkSpeedCode : speed;
+            float step = Mathf.Min(remaining, WalkMetresPerSecond * code / WalkSpeedCode * Mathf.Max(0f, DeltaTime()));
+            float worldSign = alongX && mirror ? -sign : sign;
+            Vector3 delta = alongX ? new Vector3(worldSign * step, 0, 0) : new Vector3(0, 0, worldSign * step);
+
+            var cc = body.GetComponent<CharacterController>();
+            if (cc != null && cc.enabled) cc.Move(delta); else body.position = pos + delta;
+
+            float moved = alongX ? Mathf.Abs(body.position.x - pos.x) : Mathf.Abs(body.position.z - pos.z);
+            if (step > 0f && moved < step * 0.1f)
+            {
+                w.stuck += Mathf.Max(0f, DeltaTime());
+                if (w.stuck >= BlockedTimeout) { Stub("move_actor blocked"); walks.Remove(actor); return true; }
+            }
+            else w.stuck = 0f;
+
+            float after = alongX ? (mirror ? -body.position.x : body.position.x) / unit : body.position.z / unit;
+            if (sign * (target - after) * unit <= 0.005f) { walks.Remove(actor); return true; }
+            return false;
+        }
         public override bool PlayAnim(int actor, int anim, int param, bool immediate, bool begin)
         { if (begin) Stub("anim/emote actor " + actor + " anim " + anim); return true; }
         public override void SetActorVisible(int actor, bool visible) => Stub("set_visible actor " + actor);

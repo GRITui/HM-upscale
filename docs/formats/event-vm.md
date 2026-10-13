@@ -58,8 +58,19 @@ ops run natively on `EventState.Bank` (mode, player, scratch, engine words), `Pa
   rewrites its own on_done from a variable (computed jump). The VM keeps the override in a per-run
   table and never mutates the shared command array. The earlier "script index" reading was wrong.
 - 81 big switch: cases 6, 7, 9, 0xb, 0x12, 0x13, 0x16, 0x17, 0x19, 0x1b are native; the rest go
-  to the host. Still unknown in detail: the engine-side effect of 8, 25, 62, 63, 72, 77, 82, 83 and
-  most of 81, which are delegated rather than emulated.
+  to the host. Engine-side decode of the formerly unknown ops (own words, tags are confidence):
+  - 8 set_next_location (med): p1 picks the next location row (-2 is the farm row 0x50 + 4*variant,
+    -1 is relative to the current season, -3/-4 pick special rows from engine flags), p2 == 0 adds the
+    season, p3/p4 set or clear two engine flag bits. It queues a change; it does not move the player.
+  - 82 move_run (med): the op 1 axis move (op 0 clamp semantics) at speed code 20, with an animation in p4.
+  - 83 actor_stop_face (low): immediate face or animation stop for an actor.
+  - 62 camera_scroll and 72 camera_scroll_vars (low): clamped scroll toward a limit; the first Unity
+    version uses a fixed camera so both stay logged no-ops.
+  - 63 emote (low): actor animation. 25 bgm_default (low): play the map default BGM.
+  - 77 fade_wait (low): fade and wait. The UI wait is not a single op: best candidates are op 81 case 8
+    with p4 != 0 (waits for the menu to close), op 23 wait_transition and op 99 mode_wait (unproven).
+  - Farm location row = 0x50 + season + 4*variant (rows 80..95, default 80); high confidence. This is
+    the map id the director should use. That the resident script id equals the row is plausible, unproven.
 
 ## Assumptions (not confirmed by the decode)
 - Frame timer, clock and dialogue assumptions below remain unconfirmed.
@@ -98,8 +109,13 @@ Real behaviour:
 - Input is locked while a script holds the lock or a dialogue is open; `Random` is seedable.
 
 Logged stubs (complete at once, recorded in `FarmEventHost.StubLog`, `[HM-EVENT] stub: ...` once each):
-NPC move/anim/visibility/facing, camera move/follow, scroll, fades and tints, BGM/SFX, number print,
-item give/remove, stash, and every `Engine(...)` op including the unknown op 81 cases (8, 25, 62, 63, 72, 77, 82, 83).
+NPC anim/visibility/facing, camera move/follow, scroll, fades and tints, BGM/SFX, number print,
+item give/remove, stash, and every `Engine(...)` op (8, 25, 62, 63, 72, 77, 83 and the undecoded op 81 cases).
+Moves (ops 0, 1, 82) really walk: the player or a registered NPC walks along one axis toward an absolute raw
+coordinate through its CharacterController (walls honoured), at 3.5 m/s for speed code 12 and scaled
+linearly (run 20); the pace is tuned, not derived, because the original tick rate is unknown. A move blocked
+for 0.75 s is abandoned with a `move_actor blocked` stub. Vertical dir codes (-1, -2) complete at once.
+Actors without a body (`FarmEventHost.Register`) stay logged stubs.
 Unknown ops log `unimplemented op N name [confidence]`.
 
 Gotchas:
@@ -111,8 +127,9 @@ Gotchas:
 - A CharacterController raises trigger events only when it moves.
 
 Open questions:
-- Semantics of `MoveActor` for the player (walk vs. teleport) and the floor/Y mapping used by teleports.
-- Camera and scroll behaviour, and which engine op is the UI wait.
-- Real farm map id: the director derives it from the digits of the overlay `data.id`.
+- The floor/Y mapping used by teleports, and the original walk pace (tick rate unknown).
+- Camera and scroll behaviour (fixed camera by decision), and the exact UI wait op (see candidates above).
+- Whether the farm resident script id equals the location row 80..95; the director derives it from the
+  digits of the overlay `data.id`, which matches the row numbering of the converted maps.
 
 PlayMode tests: `Tests/PlayMode/FarmEventTests.cs` (synthetic scripts and catalog only).
