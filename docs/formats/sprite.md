@@ -23,13 +23,14 @@ Sections:
 | anims | 4 | u16 frame_count, u16 byte offset into frames |
 | frames | 10 | u16 sprite, s16 xoff, s16 yoff, u8 duration (+6), u8 control (+7), u16 unknown (+8) |
 
-Part flags: 0x80 = 8bpp (else 4bpp), 0x10 = semi-transparent. Others unknown.
+Part flags: 0x01 = flip-x, 0x02 = flip-y, 0x10 = semi-transparent, 0x80 = 8bpp (else 4bpp).
+Bits 0x04, 0x08, 0x20, 0x40 unknown.
 Parts of a sprite are drawn in reverse order (last listed drawn first).
 Frame control: 0xFF hold, 0x80|n jump to frame n, 0 next. Duration is scaled 30/60.
 Texpage and CLUT base coordinates are runtime state, not stored: tiles are relative.
 Tile (u,v) is composited from the sibling 0x100D image in VRAM (1024x512 16-bit);
 decompress.parse_image gives chunks and CLUT groups for that.
 
-Unknown: part bytes +9..11 meaning, frame +8 u16, flags other than 0x80/0x10, the one
-res_0e blob (gf.bin 0x3858000 slot) that failed the magic check (probably misaligned slice).
+Unknown: part bytes +9..11 meaning, frame +8 u16, flags 0x04/0x08/0x20/0x40. The
+0x3858000 slot is a fixed sheet (res 0x800, image at +0x800), see actor.md.
 Tests: tools/hmconv/tests/test_sprite.py (synthetic fixture).

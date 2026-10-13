@@ -38,7 +38,8 @@ Payload is RLE (compression.md) or stored.
   is skipped. Example: image at 0xb9800 has n=166 = 101 chunks + 65 groups. The image ends
   at the next sector. gf.bin itself is indexed by a 261x4 u32 table (see gf.py): column 1
   is the image, columns 0/2/3 are scene data (unknown structs), plus a tail of res_0e
-  sprite tables (sprite.md). Parser: decompress.parse_image (returns "groups").
+  sprite tables (sprite.md). Rows 255-260 and beyond are standalone sprite sheets laid
+  out [res_0e blob][0x100D image], see actor.md. Parser: decompress.parse_image (returns "groups").
 
 ## Unknown
 

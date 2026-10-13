@@ -18,7 +18,8 @@ except ImportError:
     import map as mp, sprite as sp, texture as tx, texture_png as tp
     from decompress import bgr555_to_rgba, parse_image
 
-FLIP_X = 0x01  # observed: mirrored twin parts differ only by this bit (see actor.md)
+FLIP_X = 0x01  # confirmed in the packet builder (FUN_00009408 caller): bit 0 swaps x
+FLIP_Y = 0x02  # bit 1 swaps y; runtime object bits 0x08/0x10 XOR whole-sprite flips (actor.md)
 
 
 def map_vram(m):
@@ -52,6 +53,8 @@ def part_pixels(res, part, vram):
             px.append(pal[idx])
     if part["flags"] & FLIP_X:
         px = [px[j * w + (w - 1 - i)] for j in range(h) for i in range(w)]
+    if part["flags"] & FLIP_Y:
+        px = [px[(h - 1 - j) * w + i] for j in range(h) for i in range(w)]
     return w, h, px
 
 

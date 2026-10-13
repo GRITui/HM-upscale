@@ -204,6 +204,15 @@ def _hooks(ent_root, out_dir, entries, report):
             report["stats"][name] = "failed"
 
 
+def cmd_sheets(a):
+    from . import actor_sheet
+    elf = open(a.elf, "rb").read()
+    seg = open(a.gf, "rb").read()
+    idx = actor_sheet.export(elf, seg, a.output)
+    print("%d sheets, %d resources -> %s" % (len(idx), sum(len(e["resources"]) for e in idx), a.output))
+    return 0
+
+
 def cmd_batch(a):
     raw = a.raw
     usr = os.path.join(raw, "extracted", "PSP_GAME", "USRDIR")
@@ -250,6 +259,8 @@ def build_parser():
     for n in PLACEHOLDERS:
         s = sub.add_parser(n, help="%s converter (delegates to hmconv.%s when present)" % (n, n))
         s.add_argument("input"); s.add_argument("output"); s.set_defaults(fn=_placeholder(n))
+    s = sub.add_parser("sheets", help="gf.bin actor sheets (player/animal/object/NPC) -> PNG/JSON + sprite_index.json")
+    s.add_argument("elf"); s.add_argument("gf"); s.add_argument("output"); s.set_defaults(fn=cmd_sheets)
     s = sub.add_parser("batch", help="convert everything convertible under assets/hm-raw")
     s.add_argument("--raw", default=os.path.join("assets", "hm-raw"))
     s.add_argument("--output", help="default: <raw>/converted")
