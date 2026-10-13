@@ -7,7 +7,7 @@ Refreshed 2026-10-13.
 
 gf.bin column 0 is a 3D scene buffer (vertices, textured triangle and quad primitives,
 instance placement); see map.md, ADR 0006 and `tools/hmconv/scene_mesh.py`. Meshes,
-collision and GLB export work for the 16 farm rows (80..95). Texture tpage and CLUT mapping
+collision and GLB export work for the farm yard rows 0..7 and the interior rows 80..95. Texture tpage and CLUT mapping
 is PARTIAL.
 
 ## Characters: SPRITES, NO SKELETONS FOUND

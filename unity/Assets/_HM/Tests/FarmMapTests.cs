@@ -181,7 +181,7 @@ namespace HM.Tests
         [Test]
         public void StaleConvertedMapWithoutTerrainStillParses()
         {
-            var m = MapData.Parse(@"{""schema"":1,""id"":""map_080"",""terrain"":null,""regions"":[]}");
+            var m = MapData.Parse(@"{""schema"":1,""id"":""map_000"",""terrain"":null,""regions"":[]}");
             Assert.IsNull(m.terrain);
             built = MapLoader.Build(m, null);
             Assert.AreEqual(0, built.WalkableCells);
@@ -191,17 +191,37 @@ namespace HM.Tests
         public void OverlayResolveReturnsNullWhenAbsentAndPathsWhenPresent()
         {
             temp = Path.Combine(Path.GetTempPath(), "hm_overlay_" + Guid.NewGuid().ToString("N"));
-            Assert.IsNull(FarmOverlay.Resolve(temp, 80), "missing root");
+            Assert.IsNull(FarmOverlay.Resolve(temp, 0), "missing root");
             Assert.IsNull(FarmOverlay.Resolve(null, 80));
             Directory.CreateDirectory(Path.Combine(temp, "maps"));
-            Assert.IsNull(FarmOverlay.Resolve(temp, 80), "missing json");
-            File.WriteAllText(Path.Combine(temp, "maps", "map_080.json"), Json);
-            var p = FarmOverlay.Resolve(temp, 80);
+            Assert.IsNull(FarmOverlay.Resolve(temp, 0), "missing json");
+            File.WriteAllText(Path.Combine(temp, "maps", "map_000.json"), Json);
+            var p = FarmOverlay.Resolve(temp, 0);
             Assert.IsNotNull(p);
             Assert.IsFalse(p.HasGlb, "glb is optional");
             Directory.CreateDirectory(Path.Combine(temp, "scenes"));
-            File.WriteAllBytes(Path.Combine(temp, "scenes", "farm_80.glb"), new byte[] { 1 });
-            Assert.IsTrue(FarmOverlay.Resolve(temp, 80).HasGlb);
+            File.WriteAllBytes(Path.Combine(temp, "scenes", "farm_00.glb"), new byte[] { 1 });
+            Assert.IsTrue(FarmOverlay.Resolve(temp, 0).HasGlb);
+            Assert.IsTrue(FarmOverlay.Resolve(temp, 0).Glb.Contains("scenes" + Path.DirectorySeparatorChar + "farm_00"));
+            Directory.CreateDirectory(Path.Combine(temp, "scenes_textured"));
+            File.WriteAllBytes(Path.Combine(temp, "scenes_textured", "farm_00.glb"), new byte[] { 1 });
+            Assert.IsTrue(FarmOverlay.Resolve(temp, 0).Glb.Contains("scenes_textured"), "textured export wins");
+        }
+
+        [Test]
+        public void DefaultRowIsTheOutdoorYardNotAFarmhouseInterior()
+        {
+            Assert.AreEqual(0, FarmOverlay.DefaultRow, "rows 0..3 are the yard; 80..95 are interiors");
+        }
+
+        [Test]
+        public void EntryBecomesTheDefaultSpawn()
+        {
+            var json = @"{""schema"":1,""id"":""map_000"",""entry"":[-4464,0,4032],""terrain"":null,""regions"":[]}";
+            built = MapLoader.Build(MapData.Parse(json), null);
+            Assert.IsTrue(built.Spawns.TryGetValue("default", out var sp));
+            Assert.AreEqual(FarmCoords.ToWorld(-4464, 0, 4032).x, sp.position.x, 1e-3f);
+            Assert.AreEqual(FarmCoords.ToWorld(-4464, 0, 4032).z, sp.position.z, 1e-3f);
         }
     }
 
@@ -225,7 +245,7 @@ namespace HM.Tests
         [Test]
         public void FarmArrivalMapsAcrossHandedness()
         {
-            // map_080 region 0 arrival (-4464, 0, 4032): the first yard position after the farmhouse door.
+            // Farmhouse interior (row 80) region 0 arrival (-4464, 0, 4032) in the yard frame: the yard position after the door.
             var w = FarmCoords.ToWorld(new[] { -4464, 0, 4032 });
             Assert.AreEqual(-33.48f, w.x, 0.01f);
             Assert.AreEqual(30.24f, w.z, 0.01f);

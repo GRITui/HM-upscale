@@ -51,7 +51,7 @@ namespace HM.Gameplay
             var paths = FarmOverlay.Find();
             if (paths == null)
             {
-                Debug.Log(Tag + "converted farm not found (looked for maps/map_080.json under $" + FarmOverlay.EnvRoot + " and the repo assets/hm-converted); using the placeholder slice");
+                Debug.Log(Tag + "converted farm not found (looked for maps/map_000.json under $" + FarmOverlay.EnvRoot + " and the repo assets/hm-converted); using the placeholder slice");
                 return;
             }
             MapData data;

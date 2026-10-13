@@ -12,8 +12,8 @@ scene, map, sheet and event exporters, read by the Unity farm slice).
 | Fonts (boy, girl) | done | 4 / 4 | 2 per side; code-to-cell mapping still open |
 | BGM tracks (DATA001 1-51, ATRAC3plus) | done | 51 / 51 | ogg via ffmpeg |
 | DATA001 entry 0 (VAG bank) | done | 103 / 103 | split and decoded, ogg |
-| Scene meshes (gf.bin column 0) | done for farm rows | 16 / 16 farm rows (80..95) | GLB with collision; textured variant 16 / 16 |
-| Maps | done for farm rows | 16 / 16 farm rows | map_080..map_095 JSON; town map ids not yet identified |
+| Scene meshes (gf.bin column 0) | done for farm rows | 8 yard rows (0..7) plus 16 interior rows (80..95) | GLB with collision; textured variant for rows 0..7 |
+| Maps | done for farm rows | 8 yard rows | map_000..map_007 JSON (with entry); town map ids not yet identified |
 | Event scripts | done | 439 files | event bytecode to JSON (script.py) |
 | Sprites (res_0e) | done | 21 / 22 blobs parse | 1569 files (sheets, JSON, index) |
 | Actor sheets (gf tail) | done | 2588 files | player, animals, objects; girl sheet unidentified |
@@ -36,7 +36,7 @@ named trigger occurs.
 | sound.stm ('pBAV') | Not part of the vertical slice; format unspecified | Phase 10 audio polish |
 | Slp.Bin (TIM-like) | Not used by the slice | A screen needing it is built |
 | gf.bin columns 2 and 3 | Object list and shared blob are not needed for the farm slice | Town maps are converted |
-| Town and interior map rows (outside 80..95) | Slice is the farm only | Phase after the vertical slice |
+| Town and other map rows (outside 0..7) | Slice is the farm only | Phase after the vertical slice |
 | Girl-side sprite sheets | Girl sheet not identified | #5 identifies it |
 | Texture tpage and CLUT bank mapping | Partial; farm scenes render acceptably | A scene shows wrong colours |
 | Upscaled assets | Produced later from converted output | Upscale phase |

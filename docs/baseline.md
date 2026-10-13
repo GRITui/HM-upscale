@@ -125,7 +125,7 @@ and not verified. Confidence: high for eye offset, yaw, pitch and distance; low 
   @0x70cbc. It is a look-at follow camera, eye = target + R_y(yaw)(0,0,dist) plus a height. Projection distance H is
   1000 with screen centre (0xa0,0x78) on 480x272. A true FOV is not in a table. Confidence medium.
 - Correction: the position at RAM 0x08950418 recorded earlier is the camera eye, not the player. The player and the
-  map_080..095 scene share one frame (no transform, no scale), so the earlier "different frame" finding was the eye
+  map_000..007 yard scene (and the 080..095 interiors) share one frame (no transform, no scale), so the earlier "different frame" finding was the eye
   offset. The player's own position is at RAM 0x08950424 (verified; 0x089b2fb0 is a mirror). The yard bounds below are
   therefore eye bounds.
 
@@ -165,20 +165,18 @@ via `input.buttons.send` only moves if re-sent about every 30 ms.
 git-ignored assets/hm-baseline/unity/. No Unity video exists, so the ffmpeg command above was only run on stills
 (`-i now.png -i unity/farm_003.png ... hstack`).
 
-- Matches: camera angle and framing direction (high oblique dollhouse, same yaw/pitch, the character stays near the
-  centre); sprite size relative to the screen after the fix above (about 17 percent of the frame height in both);
-  unmirrored orientation (the converter fix, GLB regenerated, no mirror).
-- Does not match: the Unity scene is map_080, which renders as a grey, untextured room interior (bed, tables, shelf),
-  not the outdoor yard in the emulator screenshot. The emulator frame shows textured grass, fence, a barn and a
-  doghouse. So tile alignment, wall clipping and the outdoor look cannot be compared yet. Rows 80..95 hold the
-  farm-named maps but their decoded geometry is a 3100 x 2800 unit space around the origin, while the emulator
-  yard (player frame) is x -7000..-4253, z 1885..4420. The offset (about -5750, +3150) is unresolved, so the
-  walk grid is not proven to be the yard. The scene is also untextured; the textured GLBs were not regenerated.
-  The HUD text panel differs (Unity placeholder). The original has absolute d-pad axes; `PlayerMover` is
-  camera-relative.
-- Door, exit and spawn: tested as `FarmCoords` conversions only (exit raw (-4253, 0, 4420) maps to +z and round
-  trips; arrival (-4464, 0, 4032) maps to x -33.48, z 30.24). They cannot be placed on the scene grid until the frame
-  offset is resolved.
+- Map id: the outdoor yard is gf.bin row 0 (spring, base buildings), not rows 80..95. Rows 0..3 are the seasons and
+  4..7 the building variant; rows 80..95 are farmhouse interiors. The earlier "offset (-5750, +3150)" was the
+  comparison of the yard against an interior; against row 0 there is no offset. Unity now loads map_000 and the
+  textured scenes_textured/farm_00.glb.
+- Matches: the scene is a textured outdoor yard (grass with dirt patches, barn, fence, mailbox, doghouse), same
+  camera angle and framing direction, sprite scale, and unmirrored orientation. Spawn is the map `entry`
+  (-33.48, 0, 30.24 m), which sits beside the barn door.
+- Still deviates: the emulator screenshot (now.png) shows the player at another spot (fence and a hatch), so the two
+  frames are not the same viewpoint and no pixel diff is claimed; the HUD text panel is a Unity placeholder; the
+  original uses absolute d-pad axes while `PlayerMover` is camera-relative; the walk grid and door/exit placement were
+  checked by coordinate (exit raw (-4253, 0, 4420), arrival (-4464, 0, 4032) lie inside the row 0 yard) but not
+  walked in an automated test against the emulator.
 
 ## Side-by-side with Unity
 

@@ -10,8 +10,11 @@ namespace HM.World
     {
         public const string EnvRoot = "HM_CONVERTED";
         public const string EnvDisable = "HM_FARM_OVERLAY";
-        /// <summary>First row of the farm scene set (rows 80..95); the others differ by season/variant.</summary>
-        public const int DefaultRow = 80;
+        /// <summary>
+        /// Row of the outdoor farm yard in spring with the base buildings. Rows 0..3 are the seasons, 4..7 the
+        /// building variant (tools/hmconv/gf.py farm_row). Rows 80..95 are the farmhouse INTERIORS, not the yard.
+        /// </summary>
+        public const int DefaultRow = 0;
 
         public sealed class Paths
         {
@@ -35,7 +38,9 @@ namespace HM.World
             if (string.IsNullOrEmpty(root)) return null;
             string json = Path.Combine(root, "maps", "map_" + row.ToString("D3") + ".json");
             if (!File.Exists(json)) return null;
-            string glb = Path.Combine(root, "scenes", "farm_" + row.ToString("D2") + ".glb");
+            string name = "farm_" + row.ToString("D2") + ".glb";
+            string glb = Path.Combine(root, "scenes_textured", name); // textured export first
+            if (!File.Exists(glb)) glb = Path.Combine(root, "scenes", name);
             return new Paths { Root = root, MapJson = json, Glb = File.Exists(glb) ? glb : null };
         }
 

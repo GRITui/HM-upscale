@@ -55,8 +55,11 @@ scene buffer. `tools/hmconv/scene.py` parses its structure:
   placement shorts).
 - +0x2000: model blob, decoded below (scene_mesh.py).
 
-Farm ids are rows 80..95: base 0x50 + season + 4*variant (from the farm-id code at
-FUN_00042bac). Rows 80-83 have 23 models, 84-87 have 34, 88-91 have 48, 92-95 have 8.
+The outdoor farm yard is rows 0..7: row = season (0..3) + 4 if the building flag (DAT_001ae1ba) is set
+(FUN_0006872c / FUN_00068804; the current-map variable DAT_001ddb8c is 0 in the emulator's spring yard). Rows
+80..95 (0x50 + season + 4*house level) are the farmhouse interiors, not the yard; the door region type (80) is
+the target map id. The yard and the interior arrival point share the player frame (arrival (-4464, 0, 4032)),
+so there is no frame offset. `tools/hmconv/gf.py` (`farm_row`, `house_row`) is the single source.
 Output goes to the git-ignored `assets/hm-converted/maps/map_NNN.json` (schema 1 with
 extra `regions`, `instances`, `models`; `terrain` is the sampled walkable height grid).
 Geometry exports to `assets/hm-converted/scenes/farm_NN.glb` (`tools/hmconv/scene_glb.py`).
@@ -69,10 +72,10 @@ the blob at offset 0 is the whole-map terrain and background.
 - +8 u32 N (part count); +0xC N directory entries of 7 u32, offsets relative to blob+0xC:
   [0] vertex array, [1] vertex count, [2] vertex array end, [3] 0, [4] primitive list,
   [5] primitive count, [6] 0 in the file (runtime visibility pointer).
-- After the directory: u32 cell size (1600 in row 80), then N x (i16 x, y, z, w) part
+- After the directory: u32 cell size (1600 in row 80, an interior), then N x (i16 x, y, z, w) part
   centres. A part is considered for picking when the actor is within cell/2 + 600 on x and z.
 - Vertex: 8 bytes, i16 x, y, z, pad. Y is DOWN: ground is 0, tall things negative, pits
-  positive. The row 80 farm spans x -1800..1800, z -1768..1800.
+  positive. The row 80 interior spans x -1800..1800, z -1768..1800; the row 0 yard covers the emulator player range x -7000..-4253, z 1885..4420.
 - Primitive: u32 header (byte 3 & 0xFD gives the kind: 0x04 textured, 0x08 quad, 0x10
   per-vertex colour, 0x20 always set; byte 3 bit 1 "bit25" meaning unknown), then
   [uv words][colour words][u16 indices padded to 8 bytes]. A uv word is u8 u, u8 v, u16
@@ -87,9 +90,8 @@ Reimplemented from FUN_000158a4 and helpers (FUN_00015174 point-in-triangle on X
 FUN_00015004 plane height, FUN_00015318 quad split). An actor at (x, y, z) stands on a
 face when the point is inside its XZ projection, flags & mask == 0, and |y - face height|
 is within the tolerance (default 200, FUN_00014fb0). `scene_mesh.walk_height` and
-`terrain_grid` implement this. Result: every farm row (80..95) is flat at y = 0. Row 80
-has 532 walkable 100-unit cells (building footprints are holes), row 84 1193, row 88
-1920, row 92 200. Seasons of one variant share identical geometry.
+`terrain_grid` implement this. Result: every decoded row is flat at y = 0. Row 0 (the yard) has 31336 walkable cells in
+the converted map JSON; row 80 (an interior) has 532 100-unit cells. Seasons of one variant share identical geometry.
 
 ### Instances
 

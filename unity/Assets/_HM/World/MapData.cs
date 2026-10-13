@@ -15,6 +15,8 @@ namespace HM.World
         public MapTerrain terrain;
         public MapObject[] objects = new MapObject[0];
         public MapSpawn[] spawns = new MapSpawn[0];
+        /// <summary>Raw [x, y, z] where the player stands on arriving from the farmhouse (yard frame); optional.</summary>
+        public int[] entry;
         public MapCollider[] colliders = new MapCollider[0];
         /// <summary>Decoded trigger rectangles (raw PSX units). Data only; event ids are not interpreted.</summary>
         public MapRegion[] regions = new MapRegion[0];

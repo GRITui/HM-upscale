@@ -35,6 +35,17 @@ class T(unittest.TestCase):
         idx = [g["index"] for g in sc.parse_scene(bytes(b))["regions"]]
         self.assertEqual(idx, [0, 2])
 
+    def test_farm_rows(self):
+        import gf
+        self.assertEqual([gf.farm_row(s) for s in range(4)], [0, 1, 2, 3])
+        self.assertEqual(gf.farm_row(2, 1), 6)
+        self.assertEqual(gf.house_row(0), 80)
+        self.assertEqual(gf.house_row(3, 2), 91)
+
+    def test_entry_in_json(self):
+        r = sc.parse_scene(fixture())
+        self.assertEqual(sc.to_json(r, None, [1, 0, 2])["entry"], [1, 0, 2])
+
     def test_short(self):
         with self.assertRaises(ValueError):
             sc.parse_scene(b"\0" * 10)

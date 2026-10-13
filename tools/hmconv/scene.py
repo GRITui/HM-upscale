@@ -56,7 +56,7 @@ def parse_scene(b):
             "instances": insts, "models": models}
 
 
-def to_json(s, b=None):
+def to_json(s, b=None, entry=None):
     """ADR 0005 schema 1 plus extensions. With the scene bytes b, terrain is the sampled
     walkable height grid of the whole-map model (raw units, null = not walkable)."""
     terrain = None
@@ -68,7 +68,7 @@ def to_json(s, b=None):
             terrain = None
     return {"schema": 1, "id": "map_%03d" % s["map_id"], "name": "map_%03d" % s["map_id"],
             "terrain": terrain, "objects": [], "spawns": [], "colliders": [],
-            "regions": s["regions"], "instances": s["instances"], "models": s["models"],
+            "entry": entry, "regions": s["regions"], "instances": s["instances"], "models": s["models"],
             "undecoded": ["textures", "instance rotation/scale", "scene bit25 and face flags 0x4000/0x2000"]}
 
 

@@ -72,6 +72,14 @@ namespace HM.World
                 built.Spawns[sp.name ?? "default"] = t;
             }
 
+            if (data.entry != null && data.entry.Length >= 3 && !built.Spawns.ContainsKey("default"))
+            {
+                var t = new GameObject("Spawn default").transform;
+                t.SetParent(spawns.transform, false);
+                t.localPosition = FarmCoords.ToWorld(data.entry);
+                built.Spawns["default"] = t;
+            }
+
             if (data.terrain != null && data.terrain.IsRaw && !built.Spawns.ContainsKey("default") && WalkGrid.MostOpen(data.terrain, 5, out var open))
             {
                 var t = new GameObject("Spawn default").transform;

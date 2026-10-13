@@ -20,6 +20,23 @@ def read_table(elf):
     return [struct.unpack_from("<4I", elf, TABLE_OFF + 16 * i) for i in range(ROWS)]
 
 
+# Map-id derivation (static decompile, confirmed in the emulator: standing in the outdoor farm
+# DAT_001ddb8c = 0 with season 0). FUN_0006872c: outdoor farm id = season + (4 if the farm-building flag
+# DAT_001ae1ba is set else 0) with base 0; the farmhouse interior is FUN_00068804's 0x50 + season + 4 * house level.
+FARM_ROWS = 4          # seasons per variant
+HOUSE_BASE = 0x50
+
+
+def farm_row(season, variant=0):
+    """Outdoor farm yard row (kind 1 scene) for season 0..3 and building variant 0..1."""
+    return variant * FARM_ROWS + season
+
+
+def house_row(season, level=0):
+    """Farmhouse interior row (kind 2 scene); its region 0 arrival is the yard position after the door."""
+    return HOUSE_BASE + season + 4 * level
+
+
 def classify(head):
     if head[:2] == b"\x0d\x10":
         return "image_100d"

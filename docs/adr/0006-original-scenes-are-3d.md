@@ -7,7 +7,7 @@ Status: accepted. Supersedes the "2D sprite game" premise in earlier notes
 
 Earlier analysis concluded the game had no 3D data. Decoding gf.bin column 0 shows each
 scene is a 3D buffer: a header with regions and model instances, and a model block of
-vertices and textured triangle/quad primitives. Farm rows 80..95 contain terrain, buildings
+vertices and textured triangle/quad primitives. Farm yard rows 0..7 (and interior rows 80..95) contain terrain, buildings
 and objects. Walking collision uses the same triangles (flat ground at y = 0 on the farm).
 
 ## Decision

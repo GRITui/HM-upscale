@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-Commit 5c0f94b decodes the real farm (map rows 80..95). The converted JSON
+Commit 5c0f94b decodes the real farm (yard rows 0..7; rows 80..95 are the farmhouse interiors). The converted JSON
 (`assets/hm-converted/maps/map_0NN.json`) and GLBs (`assets/hm-converted/scenes/farm_NN.glb`)
 derive from the user's own disc image and are git-ignored. They must never be committed.
 
@@ -13,7 +13,7 @@ derive from the user's own disc image and are git-ignored. They must never be co
 - `HM.Gameplay.FarmOverlayBootstrap` hooks `SceneManager.sceneLoaded` for the scene
   `SliceFarm`. No scene file changes and no ProjectSettings changes are needed.
 - Converted root: env `HM_CONVERTED`, then `<repo>/assets/hm-converted`. Env
-  `HM_FARM_OVERLAY=0` disables the overlay. The default row is 80. The game derives the farm row as 0x50 + season + 4*variant (high confidence), so rows 80..95 are the 4 seasons x 4 variants.
+  `HM_FARM_OVERLAY=0` disables the overlay. The default row is 0. The game derives the yard row as season + 4*building flag (FUN_0006872c), so rows 0..7 are the yard; rows 80..95 are interiors (0x50 + season + 4*house level). Textured GLBs under scenes_textured are preferred.
 - Missing JSON, a parse error, or missing terrain each log one `[HM-FARM]` line and leave
   the placeholder slice untouched. A missing GLB keeps the collision floor visible.
 - Raw terrain (`cell`, `origin`, null = blocked) goes through `WalkGrid`: a MeshCollider floor
@@ -57,6 +57,4 @@ The guessed camera (pitch, yaw, distance, FOV, x1.5 rescale in the bootstrap) is
 offset (6363, -4500, -6364) raw through `FarmCoords.CameraOffset`: a fixed follow with zero damping, rotation
 looking along the negated offset (yaw 315, pitch 26.57), and `FarmCamera.DerivedVerticalFov` 15.49 degrees
 (derived from H = 1000 and a 272 px screen, not measured). Sprites are 1:1 with the screen in the original, so the
-sprite scale is 10 raw units per pixel. Run is Circle (73 vs 41). Known open issue: map_080 renders as an
-untextured room interior and the emulator player frame is offset from the scene grid, so the outdoor yard is not
-yet reproduced; see docs/baseline.md, "Unity vs emulator comparison".
+sprite scale is 10 raw units per pixel. Run is Circle (73 vs 41). The earlier map_080 default was a mistake (it is the farmhouse interior); map_000 is the outdoor yard and shares the player frame, see docs/baseline.md, "Unity vs emulator comparison".
