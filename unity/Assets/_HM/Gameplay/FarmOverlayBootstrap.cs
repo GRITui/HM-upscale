@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GLTFast;
+using HM.Sprites;
 using HM.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -78,6 +79,8 @@ namespace HM.Gameplay
                 if (cc != null) cc.enabled = true;
             }
             Loaded = true;
+            try { SpriteLayer.Spawn(player != null ? player.transform : null, spawn.position, transform); }
+            catch (Exception e) { Debug.LogWarning(Tag + "sprite layer failed, keeping placeholders: " + e.Message); }
             Debug.Log(Tag + "loaded " + data.id + ": " + Built.WalkableCells + " walkable cells, " + Built.RegionCount + " regions, spawn " + spawn.position
                 + " (scale " + FarmCoords.UnitsToMetres + " m/unit, mirrorX " + FarmCoords.MirrorX + " are assumptions)");
 

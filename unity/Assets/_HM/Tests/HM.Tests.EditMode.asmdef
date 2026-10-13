@@ -4,6 +4,7 @@
   "references": [
     "HM.Core",
     "HM.World",
+    "HM.Sprites",
     "HM.Importers",
     "HM.Audio",
     "HM.Tools",
