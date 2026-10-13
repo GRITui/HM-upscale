@@ -23,7 +23,7 @@ Git-ignored, same folder. Loaded after rules.json via `RulesData.ApplyOverlay`.
 Paths: `startingGold`, `maxStamina`, `tool.<id>.staminaCost`, `crop.<id>.growDays|seedPrice|sellPrice`.
 Unknown paths throw. Candidates from `docs/formats/tables.md`: seed buy price (f12, high),
 shop item prices (f12, high). Sell values (f13) are medium. Seed index to crop id mapping is
-done by whoever writes the overlay locally. Growth days and stamina costs are NOT located.
+done by whoever writes the overlay locally. Growth days (crop table 0x127448) and stamina costs (table 0x13760A) are located; see parity.md.
 
 ## dialogue.json (schema 1)
 `{ schema, source, start, nodes[] }`. Node: `id, speaker, face, text, next, ifFlag, ifNext, setFlags[], choices[]`.

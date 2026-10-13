@@ -1,7 +1,7 @@
 # Data tables (items, seeds, prices)
 
 Status round 4: item/shop/seed price table located and parsed (`tools/hmconv/tables.py`).
-Crops growth days, calendar, affection and stamina tables are NOT located.
+Crop growth, calendar and stamina tables are now located (docs/rules/parity.md, economy.py); affection is not.
 
 ## Item/shop table
 In `hmpsp.prx.elf` at file offset 0x12763C (Ghidra address = offset - 0x74): 331 rows of

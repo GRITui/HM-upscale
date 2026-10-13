@@ -18,7 +18,60 @@ def fixture():
     return bytes(b)
 
 
+def real_elf():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "..",
+                        "assets", "hm-raw", "eboot", "hmpsp.prx.elf")
+    path = os.environ.get("HM_ELF", path)
+    return open(path, "rb").read() if os.path.exists(path) else None
+
+
 class T(unittest.TestCase):
+    def test_tool_cost_table_synthetic(self):
+        b = bytearray(e.TOOL_COST_VADDR + e.ELF_BIAS + 64)
+        for r in range(5):
+            struct.pack_into("<5h", b, e.TOOL_COST_VADDR + e.ELF_BIAS + r * 10, -1, -2, -3, -4, -5)
+        b = bytes(b)
+        self.assertEqual(e.tool_stamina_cost(b, 1), 1)
+        self.assertEqual(e.tool_stamina_cost(b, 6, held_frames=45), 3)
+        self.assertEqual(e.tool_stamina_cost(b, 21, held_frames=9999), 5)
+
+    def test_regrow_days(self):
+        c = {"regrow_stage": 1, "stages": 3, "stage_days": [3, 3, 2, 0]}
+        self.assertEqual(e.regrow_days(c), 6)
+        self.assertIsNone(e.regrow_days({"regrow_stage": 65535, "stages": 2, "stage_days": [1, 1, 0, 0]}))
+
+    def test_sleep_recovery(self):
+        self.assertEqual(e.sleep_recovery(8), (106, -21))
+        self.assertEqual(e.sleep_recovery(20), (127, -45))
+        self.assertEqual(e.sleep_recovery(100), (127, -128))
+
+    def test_action_fatigue(self):
+        self.assertEqual(e.action_fatigue(1, 12, 50), 1)
+        self.assertEqual(e.action_fatigue(1, 23, 50), 2)
+        self.assertEqual(e.action_fatigue(1, 3, 0), 5)
+        self.assertEqual(e.action_fatigue(1, 3, 0, half=True), 2)
+        self.assertEqual(e.action_fatigue(1, 3, 0, immune=True), 0)
+
+    @unittest.skipIf(real_elf() is None, "hmpsp.prx.elf not available")
+    def test_real_elf_decodes_match_wiki(self):
+        d = real_elf()
+        self.assertEqual(e.tool_costs(d), [[1, 2, 3, 4, 5]] * 5)
+        crops = e.parse_crops(d)
+        regrow = sorted({e.regrow_days(c) for c in crops if e.regrow_days(c)})
+        self.assertEqual(regrow, [3, 4, 6, 9])
+        by = {e.SEED_NAMES[c["seed_index"]]: c for c in e.crops_with_prices(d)}
+        self.assertEqual((by["Turnip"]["grow_days"], by["Turnip"]["seed_price"], by["Turnip"]["sell_price"]), (4, 120, 60))
+        self.assertEqual((by["Corn"]["grow_days"], by["Corn"]["seed_price"], by["Corn"]["sell_price"]), (14, 300, 100))
+        self.assertEqual((by["Pineapple"]["grow_days"], e.regrow_days(by["Pineapple"])), (20, 6))
+
+    @unittest.skipIf(real_elf() is None, "hmpsp.prx.elf not available")
+    def test_real_elf_festivals_match_wiki(self):
+        wiki = {0: [1, 8, 14, 18, 22], 1: [1, 7, 12, 20, 24], 2: [3, 9, 13, 21], 3: [10, 14, 24, 30]}
+        got = {}
+        for s, d, _ in e.festivals(real_elf()):
+            got.setdefault(s, []).append(d + 1)
+        self.assertEqual({k: sorted(v) for k, v in got.items()}, wiki)
+
     def test_crop_grow_days_uses_stage_count(self):
         c = e.parse_crops(fixture())[3]
         self.assertEqual(c["stage_days"], [2, 3, 4, 99])

@@ -13,7 +13,7 @@ is the observation still to be made in the original game; until then the rule st
 | Watering needs tilled soil | placeholder | low | NoEffectCostsNothing | water bare ground |
 | Planting needs tilled soil and a seed | placeholder | low | PlantRequiresSeedsAndTilledSoil | plant on bare ground |
 | Sickle harvests mature crop only | placeholder | low | HarvestAfter... | sickle on young crop |
-| Stamina cost per tool | placeholder (table not located) | low | HoeTillsAndCostsStamina, ExhaustedStaminaBlocksTool | count uses until exhausted |
+| Stamina cost per tool | extracted: table 0x13760A, uncharged use = 1 for every tool (rules.json) | medium | HoeTillsAndCostsStamina, ExhaustedStaminaBlocksTool | count uses until exhausted |
 | No stamina spent on no-effect action | placeholder | low | NoEffectCostsNothing | swing at nothing |
 | Stamina refills on new day | placeholder | low | NewDayRestoresStamina, PlayMode OneDayEndToEnd | check bar after sleep |
 | Watering resets at day end | placeholder | low | CropGrowsOnlyOnWateredDays | check tile next morning |
@@ -56,8 +56,26 @@ numbers are written only to the git-ignored assets/hm-converted/, never committe
 | seed buy price, produce sell price | seed row field 8, produce row field 9 of the item table | high |
 | item table alignment | base vaddr 0x1275A8, stride 0x28 (tables.py base is 0x20 bytes high) | high |
 
-Not decoded yet: forced-sleep clock cutoff (no hour trigger found; 02:00 stays a placeholder),
-per-tool stamina costs (a table of -1 to -5 exists at vaddr 0x13760A, indexing unclear),
-starting inventory, affection scale and heart tiers, animals, cooking, regrow-stage meaning,
-and the mapping from the 22 seed indices to repo crop ids (crop entries in rules.json stay
-placeholder).
+## Decoded in Sprint (addresses are vaddr; RAM = 0x08804000 + vaddr; file offset = vaddr + 0x74)
+
+| rule | decoded | address | confidence |
+|---|---|---|---|
+| stamina cost per tool | 5x5 shorts, every row -1,-2,-3,-4,-5; row = (tool slot-1)/5, column = charge level = held frames/20; so an uncharged use costs 1 for hoe, can, seed bag and sickle alike | table 0x13760A, read in FUN_0004966c, applied by FUN_000517f8 | high (values), medium (frame mapping) |
+| tiles per charge level | 1, 3, 6, 9, 25 | 0x137600 | medium |
+| max stamina | 100 at new game; raised by FUN_00051974 (cap 255), which refills stamina | FUN_00094030, FUN_00051974 | high |
+| exhaustion | stamina and fatigue clamped to [0,max] and [0,100]; fatigue is held at 99 at 06:00 | FUN_000517f8 | high |
+| fatigue per action | base +1 if flag DAT_001b81b0, +1 at 22-23, +2 at 00-05, +2 if stamina is 0, halved if DAT_001aef1c bit 0x200, zero if DAT_001aeee6 bit 8 | FUN_0004853c | high |
+| hourly fatigue | +3 from 00, +4 from 02, +5 from 04, +10 from 06 | table 0x1376E8, FUN_0004d978 | medium |
+| sleep recovery | stamina +min(127, hours*7+50); fatigue change max(-128, -(hours*2+5)) | FUN_0004d72c, FUN_0004d630, FUN_0004d65c | medium |
+| forced sleep | the collapse is event driven: script opcode sets fatigue to 100 and event flag 0x49, then FUN_000259b4 starts the pass-out sleep (+50 stamina, -22 fatigue; +100/-25 in a window). No clock-hour trigger exists in code; 06:00 is the day rollover. The 02:00 ForcedSleepHour stays a placeholder | FUN_0005f5f4 case 5, FUN_000259b4 | medium (mechanism), unknown (trigger conditions) |
+| crop table | 22 rows; season is 0 spring, 1 summer, 2 fall, 4 none | 0x127448 | high |
+| regrow stage | regrow days = sum of stage-day values from the regrow stage to the last stage, plus one. Gives 3/4/6/9 for all nine renewable crops, as the wiki states | crop table field 2 | high |
+| seed index to crop | 0 Turnip, 1 Potato, 2 Cucumber, 3 Strawberry, 4 Cabbage, 5 Tomato, 6 Corn, 7 Onion, 8 Pumpkin, 9 Pineapple, 10 Eggplant, 11 Carrot, 12 Sweet Potato, 13 Spinach, 14 Green Pepper, 15 Grass, 16 Moondrop, 17 Pink Cat, 18/19 Magic Flower, 20 Toy Flower, 21 unnamed | economy.SEED_NAMES; price, sell and grow days of every named row match the wiki | high (0-18, 20), low (19, 21) |
+| festivals | 18 rows, season and 0-based day. All 18 dates equal the wiki (spring 1,8,14,18,22; summer 1,7,12,20,24; fall 3,9,13,21; winter 10,14,24,30). Event ids exist only for 6 of them | 0x13ED1C | high |
+
+The repo crop ids sprout_beet and plain_corn are slice-local names with no decoded counterpart,
+so their growDays and prices remain placeholder. A real crop is added by writing its overlay.
+
+Not decoded: the fatigue-100 collapse condition and any clock cutoff, starting inventory (the
+new-game init FUN_00094030 zeroes the rucksack, so starting items come from event scripts),
+affection scale and heart tiers, animals, cooking.

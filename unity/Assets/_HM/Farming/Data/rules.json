@@ -3,10 +3,10 @@
   "startingGold": { "value": 500, "source": "extracted", "confidence": "high" },
   "maxStamina": { "value": 100, "source": "extracted", "confidence": "high" },
   "tools": [
-    { "id": "hoe",         "staminaCost": { "value": 4, "source": "placeholder", "confidence": "low" } },
-    { "id": "wateringCan", "staminaCost": { "value": 2, "source": "placeholder", "confidence": "low" } },
-    { "id": "seedBag",     "staminaCost": { "value": 1, "source": "placeholder", "confidence": "low" } },
-    { "id": "sickle",      "staminaCost": { "value": 3, "source": "placeholder", "confidence": "low" } }
+    { "id": "hoe",         "staminaCost": { "value": 1, "source": "extracted", "confidence": "medium" } },
+    { "id": "wateringCan", "staminaCost": { "value": 1, "source": "extracted", "confidence": "medium" } },
+    { "id": "seedBag",     "staminaCost": { "value": 1, "source": "extracted", "confidence": "medium" } },
+    { "id": "sickle",      "staminaCost": { "value": 1, "source": "extracted", "confidence": "medium" } }
   ],
   "crops": [
     {

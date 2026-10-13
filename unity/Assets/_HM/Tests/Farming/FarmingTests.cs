@@ -29,6 +29,16 @@ namespace HM.Tests.Farming
             }
         }
 
+        [Test] public void DecodedToolStaminaCostIsOneForUnchargedUse()
+        {
+            // 5x5 table at vaddr 0x13760A: column 0 (uncharged) is -1 for every tool row.
+            foreach (var t in rules.tools)
+            {
+                Assert.AreEqual(1, t.staminaCost.value, t.id);
+                Assert.AreEqual("extracted", t.staminaCost.source, t.id);
+            }
+        }
+
         [Test] public void CommittedRulesAreNumericOnly()
         {
             // Small numeric rule values (gold, prices, growth days) may be committed;
