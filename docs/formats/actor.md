@@ -38,8 +38,8 @@ renders it. File offsets in the ELF are vaddr + 0x74.
 
 | id | loader | list / pointer rows (vaddr) | sheets | content |
 |----|--------|------------------------------|--------|---------|
-| main_00..01 | FUN_00065ed8 | 0x139910 / 0x1354f8 | 2 | player sets, 10 resources each (boy/girl order unconfirmed) |
-| main_02..05 | FUN_00065ed8 | same | 4 | animals (5,5,5,3 resources) |
+| main_00..01 | FUN_00065ed8 | 0x139910 / 0x1354f8 | 2 | animals: main_00 is a cow, main_01 is a sheep (10 resources each); NOT the player sets |
+| main_02..05 | FUN_00065ed8 | same | 4 | more animals (5,5,5,3 resources) |
 | chr_00..09 | FUN_00066154 | 0x13992c / 0x135a54 | 10 | small field objects, 16-45 resources each |
 | obj_00..49 | FUN_0006624c | 0x139970 / 0x1362ec | 50 | human characters: rivals, villagers, spouse and baby variants; 35..49 carry a second image at row[n+2] |
 | fx_37e2800, fx_37ec800 | FUN_00065d5c | fixed | 2 | inline image after the res (0xa20 / 0x838 bytes) |
@@ -60,7 +60,7 @@ Solved: map-embedded char/object sprites; every gf-tail sheet (location, loader,
 VRAM image, all sub-resources parse and render); flip-x (0x01) and flip-y (0x02).
 Runtime: object-struct bits 0x08/0x10 XOR a whole-sprite flip-x/flip-y, bit 0x20 forces
 semi-transparent.
-Unknown: part flag bits 0x04, 0x08, 0x20, 0x40; which main sheet is boy and which is
-girl; the in-game names of the chr/obj sheets; the animation-id to behaviour mapping
+Unknown: part flag bits 0x04, 0x08, 0x20, 0x40; which sheet is the girl (the boy is
+obj_14_r00; pink-haired obj_01 is only a candidate for the girl); the in-game names of the chr/obj sheets; the animation-id to behaviour mapping
 (game logic); rendering of the second image of obj_35..49 (located, not composited);
 the Status/minigame pixel sources, evch.bin (seg013), and the Font_all.tex glyph layout.

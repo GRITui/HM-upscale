@@ -12,7 +12,7 @@ where the blob packs n res_0e resources at offsets table[1..n] (table = a data r
 {n, off_0..off_{n-1}, size, ...} reached through a pointer array). The image's chunks and
 CLUTs land at the absolute VRAM positions the tiles reference, so a fresh Vram per sheet
 renders it. Families (loader function, offset list, pointer array, ELF vaddrs):
-  main  FUN_00065ed8  0x139910 / 0x1354f8   6 sheets: 0,1 player sets, 2..5 animals
+  main  FUN_00065ed8  0x139910 / 0x1354f8   6 sheets: 0 cow, 1 sheep, 2..5 more animals (none are the player)
   chr   FUN_00066154  0x13992c / 0x135a54  10 sheets: small field objects
   obj   FUN_0006624c  0x139970 / 0x1362ec  50 sheets: human characters, spouse variants
 Fixed sheets (loaded by address): see FIXED. See docs/formats/actor.md.
