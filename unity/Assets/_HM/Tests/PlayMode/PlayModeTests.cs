@@ -2,6 +2,7 @@ using System.Collections;
 using System.IO;
 using HM.Characters;
 using HM.Core;
+using HM.Gameplay;
 using HM.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace HM.Tests.PlayMode
         [TearDown]
         public void DestroyPersistentClock()
         {
+            System.Environment.SetEnvironmentVariable(FarmOverlay.EnvDisable, null);
             // The clock host uses DontDestroyOnLoad, so remove it between tests.
             if (GameClockBehaviour.Instance != null) Object.DestroyImmediate(GameClockBehaviour.Instance.gameObject);
         }
@@ -34,6 +36,9 @@ namespace HM.Tests.PlayMode
         {
             // Headless runs otherwise spin at thousands of fps, and per-frame moves fall below
             // CharacterController.minMoveDistance. Pin a realistic frame rate.
+            // These tests exercise the hand-placed slice; the converted farm overlay (present only on machines with
+            // local converted data) moves the player asynchronously and would make them machine dependent.
+            System.Environment.SetEnvironmentVariable(FarmOverlay.EnvDisable, "0");
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
             var op = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Single);

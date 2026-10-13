@@ -37,6 +37,7 @@ namespace HM.Gameplay
         static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (scene.name != SceneName) return;
+            Loaded = false; GlbLoaded = false; // per scene load, not just per play session
             var go = new GameObject("FarmOverlay");
             SceneManager.MoveGameObjectToScene(go, scene);
             go.AddComponent<FarmOverlayBootstrap>();
