@@ -132,7 +132,10 @@ namespace HM.Gameplay
             if (toastPanel.activeSelf && Time.unscaledTime > toastUntil) toastPanel.SetActive(false);
 
             var npc = NpcDialogue.Active;
-            if (npc != null && npc.Runner != null && !npc.Runner.Finished) ShowDialogue(npc); else if (dialoguePanel.activeSelf) dialoguePanel.SetActive(false);
+            var evBridge = FarmEventDirector.Instance != null ? FarmEventDirector.Instance.Bridge : null;
+            if (npc != null && npc.Runner != null && !npc.Runner.Finished) ShowDialogue(npc.Runner);
+            else if (evBridge != null && evBridge.Active) ShowDialogue(evBridge.Runner);
+            else if (dialoguePanel.activeSelf) dialoguePanel.SetActive(false);
 
             string p = "";
             if (npc == null)
@@ -150,14 +153,14 @@ namespace HM.Gameplay
             if (!Mathf.Approximately(fade.color.a, fa)) fade.color = new Color(0, 0, 0, fa);
         }
 
-        void ShowDialogue(NpcDialogue npc)
+        void ShowDialogue(HM.Dialogue.DialogueRunner runner)
         {
             if (!dialoguePanel.activeSelf) dialoguePanel.SetActive(true);
-            var n = npc.Runner.Current;
+            var n = runner.Current;
             dlgSpeaker.text = n.speaker;
             dlgText.text = n.text;
             sb.Clear();
-            var choices = npc.Runner.VisibleChoices();
+            var choices = runner.VisibleChoices();
             if (choices.Count == 0) sb.Append("E: continue");
             for (int i = 0; i < choices.Count; i++) sb.Append(i + 1).Append(". ").Append(choices[i].text).Append('\n');
             dlgChoices.text = sb.ToString();

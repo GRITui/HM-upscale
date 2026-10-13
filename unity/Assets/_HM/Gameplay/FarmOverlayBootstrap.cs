@@ -80,6 +80,13 @@ namespace HM.Gameplay
                 if (cc != null) cc.enabled = true;
             }
             Loaded = true;
+            try
+            {
+                var dir = new GameObject("FarmEventDirector").AddComponent<FarmEventDirector>();
+                dir.transform.SetParent(transform, false);
+                dir.Init(player != null ? player.transform : null, FarmEventDirector.MapNumber(data.id));
+            }
+            catch (Exception e) { Debug.LogWarning(Tag + "event director failed: " + e.Message); }
             try { SpriteLayer.Spawn(player != null ? player.transform : null, spawn.position, transform); }
             catch (Exception e) { Debug.LogWarning(Tag + "sprite layer failed, keeping placeholders: " + e.Message); }
             Debug.Log(Tag + "loaded " + data.id + ": " + Built.WalkableCells + " walkable cells, " + Built.RegionCount + " regions, spawn " + spawn.position

@@ -84,3 +84,35 @@ Data directory: `EventLoader.OverrideDir`, else env `HM_EVENTS_DIR`, else
 clock gates, wait idiom, yield, timers, dialog and result variable, unknown-op logging, step budget,
 script end, determinism, runner triggers/queue, dialogue bridge, loader fallback and parsing. One
 test runs every real converted script against a stub host when the data is present locally.
+
+## Farm integration (FarmEventHost / FarmEventDirector)
+`Gameplay/FarmEventHost.cs` is the concrete `IEventHost` for the slice farm. `Gameplay/FarmEventDirector.cs`
+owns the `EventRunner`, is created by `FarmOverlayBootstrap`, subscribes to `MapRegionTrigger.Entered`
+and ticks the runner each frame. Walking into a trigger runs the map's resident script.
+
+Real behaviour:
+- Clock fields (hour 10, minute 26, weekday 11, year 12, season 13, day 14) and `TotalMinutes` come from `GameClock`.
+- Map field 15; player position fields 21-23 (raw units, see `FarmCoords`).
+- Op 61 set_player_pos and player `SetActorPos` teleport the player (CharacterController disabled during the move).
+- Dialogue (op 2) goes through `DialogueBridge`; the HUD shows it and digit keys / E / Space choose and advance.
+- Input is locked while a script holds the lock or a dialogue is open; `Random` is seedable.
+
+Logged stubs (complete at once, recorded in `FarmEventHost.StubLog`, `[HM-EVENT] stub: ...` once each):
+NPC move/anim/visibility/facing, camera move/follow, scroll, fades and tints, BGM/SFX, number print,
+item give/remove, stash, and every `Engine(...)` op including the unknown op 81 cases (8, 25, 62, 63, 72, 77, 82, 83).
+Unknown ops log `unimplemented op N name [confidence]`.
+
+Gotchas:
+- `EventRunner.OnRegionEntered` returns false when no file is set. The region event id equals the map id,
+  so the director always calls `SetMap`, with an empty `EventFile` when no data exists locally.
+- No `IMessageCatalog` implementation exists in the repo (game text is never committed). `FarmEventDirector.Catalog`
+  is null by default, so dialogue completes at once with result 0 and the ids land in `DialogueBridge.Missing`.
+  A local-only catalog can be assigned before `Init`.
+- A CharacterController raises trigger events only when it moves.
+
+Open questions:
+- Semantics of `MoveActor` for the player (walk vs. teleport) and the floor/Y mapping used by teleports.
+- Camera and scroll behaviour, and which engine op is the UI wait.
+- Real farm map id: the director derives it from the digits of the overlay `data.id`.
+
+PlayMode tests: `Tests/PlayMode/FarmEventTests.cs` (synthetic scripts and catalog only).

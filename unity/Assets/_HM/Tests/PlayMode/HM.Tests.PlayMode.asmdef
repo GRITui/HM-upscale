@@ -1,7 +1,7 @@
 {
   "name": "HM.Tests.PlayMode",
   "rootNamespace": "HM.Tests.PlayMode",
-  "references": ["HM.Core", "HM.World", "HM.Sprites", "HM.Characters", "HM.Gameplay", "HM.Farming", "HM.Dialogue", "HM.Audio", "HM.CameraRig", "Unity.Cinemachine", "Unity.InputSystem", "Unity.InputSystem.TestFramework", "UnityEngine.TestRunner"],
+  "references": ["HM.Core", "HM.Events", "HM.World", "HM.Sprites", "HM.Characters", "HM.Gameplay", "HM.Farming", "HM.Dialogue", "HM.Audio", "HM.CameraRig", "Unity.Cinemachine", "Unity.InputSystem", "Unity.InputSystem.TestFramework", "UnityEngine.TestRunner"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

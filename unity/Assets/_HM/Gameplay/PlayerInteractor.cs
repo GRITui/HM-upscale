@@ -28,7 +28,24 @@ namespace HM.Gameplay
             var kb = Keyboard.current;
 
             var npc = NpcDialogue.Active;
-            if (mover != null) mover.enabled = npc == null;
+            var dir = FarmEventDirector.Instance;
+            var bridge = dir != null ? dir.Bridge : null;
+            bool evLocked = dir != null && dir.InputLocked;
+            if (mover != null) mover.enabled = npc == null && !evLocked;
+            if (npc == null && bridge != null && bridge.Active)
+            {
+                Focus = null;
+                if (kb == null) return;
+                if (bridge.Runner.HasChoices)
+                {
+                    int n = bridge.Runner.VisibleChoices().Count;
+                    for (int i = 0; i < n && i < 9; i++)
+                        if (kb[Key.Digit1 + i].wasPressedThisFrame) { bridge.Choose(i); return; }
+                }
+                else if (kb.eKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) bridge.Advance();
+                return;
+            }
+            if (evLocked && npc == null) { Focus = null; return; }
             if (npc != null)
             {
                 Focus = null;
