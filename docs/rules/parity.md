@@ -26,3 +26,19 @@ is the observation still to be made in the original game; until then the rule st
 | Day tint and sun path | own design | high (own code) | SunIsBrighterAtNoonThanAtNight | compare lighting over a day |
 | Farm slice loop (till, plant, water, sleep, grow, talk) | rules.json + placeholders | low | PlantWaterSleepGrowAndTalkToNpc | play one in-game day |
 | Starting seeds in the slice | placeholder (FarmWorld.startingSeeds=4) | low | n/a | start a new game |
+
+## Decoded calendar and clock (tools/hmconv/rules.py)
+
+Source: reading the clock tick and new-game init in the EBOOT. Structural, not game text.
+
+| rule | decoded | confidence |
+|---|---|---|
+| calendar | 4 seasons x 30 days, 7-day weekday cycle, year capped at 99 | high |
+| day boundary | the day counter advances at 06:00; the clock wraps 23:59 to 00:00 | high |
+| minute length | one minute per 15 frame ticks at the default speed setting | medium |
+| new game | year 0, spring, day index 1, weekday 1, 06:00 | medium |
+| festival table | 18 rows (season, day, event id); first 14 scanned by the lookup | medium |
+
+Not decoded yet: forced-sleep time (hours 0 to 5 are a distinct night band), crop growth days,
+stamina costs, starting gold and inventory, affection scale. None of these tags change in
+rules.json; it stays placeholder-only.
