@@ -40,3 +40,28 @@ byte is the escape; esc,val,count emits val count times) with sizes from a table
 0x138284.
 
 Unknown: farm map id, collision, opcode table, flags word meaning.
+
+## Correction: scenes are 3D (gf.bin), not pre-rendered tiles
+
+The earlier statement that backgrounds are pre-rendered and the game has no 3D is wrong.
+Map id N is row N of the gf.bin index table (see `tools/hmconv/gf.py`); column 0 is the
+scene buffer. `tools/hmconv/scene.py` parses its structure:
+
+- Header 0xBDC bytes: shorts [1]=scene kind, [2]=map id.
+- +0x10: 50 region entries of 0x2c bytes. Shorts: [0] flags (0x4000 interactable),
+  [1] type or target map id, [2] event id (-1 none), [4] required facing, [5] 99 = no
+  condition, [7],[9] min x,z, [10],[12] max x,z, [19..21] possible arrival xyz.
+- +0x948: 15 model-instance entries of 0x2c bytes (flags, 3 offsets into the model block,
+  placement shorts).
+- +0x2000: model directory (u32 N at +8, N x 0x1c bytes from +0xC: bound xyz, offset,
+  primitive count).
+
+Farm ids are rows 80..95: base 0x50 + season + 4*variant (from the farm-id code at
+FUN_00042bac). Rows 80-83 have 23 models, 84-87 have 34, 88-91 have 48, 92-95 have 8.
+Output goes to the git-ignored `assets/hm-converted/maps/map_NNN.json` (schema 1 with
+extra `regions`, `instances`, `models`; `terrain` is null).
+
+Still unknown: the mesh primitive format (so no terrain heights and no walking
+collision), whether region field [1] is a warp destination (supported by
+FUN_00041d3c, unconfirmed per entry), the arrival-position fields, the 100-entry object
+list in column 2, town map ids, and the role of the shared column 3 blob.
