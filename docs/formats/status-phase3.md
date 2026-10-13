@@ -2,21 +2,13 @@
 
 Statuses: SOLVED, PARTIAL, UNSOLVED. Everything not marked SOLVED is a guess or a lead.
 
-## Model and skeleton: DO NOT EXIST (high confidence)
+## Model and skeleton: SCENES ARE 3D, SKELETONS UNSOLVED
 
-The game is a native port of a PS1 title with PS1 library emulation and is a 2D sprite
-game. No segment carries a 3D mesh signature, and the PRX contains no skeletal
-animation or vertex-skinning code; scene state is built from sprite resources
-(res_0e, FUN_000086ec) and tile maps. There is no model, skeleton or bone animation to
-convert. Sprites animate by frame sequences.
-
-Round-3 re-check of gf.bin (confirmed, no 3D): all 255 table rows have a 0x100D 4/8bpp
-CLUT image in column 1; the engine emits only GP0 0x64 textured rectangles and
-ordering-table links (FUN_00009408), no GTE/polygon packets; the module imports no
-GU/GUM/VFPU 3D API; res_0e entries are 2D part tables (tile u,v,w,h + x/y offsets +
-frame sequences). The remaining gf.bin columns (0, 2, 3) are not yet decoded, but
-col 2 reads as RGB555 palettes and col 3 is a byte-identical shared 0x12800 blob, so
-nothing there is a per-scene mesh.
+Correction: earlier rounds called the game 2D. gf.bin column 0 is a 3D scene buffer
+(vertices, textured triangle and quad primitives, instance placement); see map.md and
+tools/hmconv/scene_mesh.py. Scene meshes and collision are SOLVED structurally; textures
+(tpage/clut mapping) are PARTIAL. Character models, skeletons and bone animation were not
+found: actors may still be sprites (res_0e, FUN_000086ec) and that remains unverified.
 
 ## Image data: PARTIAL
 

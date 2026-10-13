@@ -3,7 +3,8 @@
 
 The table (ELF file offset 0x138908 + 0x74, 261 rows of 4 u32 byte offsets, all
 0x800-aligned) gives per-scene asset starts. Column roles (by content signature):
-  0  scene data header/table (unknown struct, ~0x6800-0x37800 bytes; 6 rows are res_0e)
+  0  3D scene buffer: 0xBDC header (regions, instances) + model block at +0x2000
+     (scene.py, scene_mesh.py), ~0x6800-0x37800 bytes; 6 rows are res_0e
   1  0x100D CLUT image (255 rows)            -> decompress.parse_image
   2  palette-like u16 table (RGB555) or res_0e, 0x800-0x1000 bytes
   3  shared 0x12800 blob, byte-identical across rows (script/tile table; unknown)

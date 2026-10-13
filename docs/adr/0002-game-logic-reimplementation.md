@@ -1,6 +1,6 @@
 # ADR 0002: Game logic is reimplemented, not ported
 
-Status: accepted
+Status: accepted. Premise corrected by ADR 0006: the original scenes are 3D, so the remake rebuilds real geometry and layout from the extracted data; only game logic is reimplemented from observation.
 
 ## Context
 The original game ships as compiled PSP code. Decompiling or translating that code is out of scope and would tie the project to the original binary.

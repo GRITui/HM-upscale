@@ -1,6 +1,6 @@
 # ADR 0005: Map JSON
 
-Status: accepted. Implemented by `HM.World.MapData` and `MapLoader`.
+Status: accepted; see ADR 0006 for the original 3D scene source. Implemented by `HM.World.MapData` and `MapLoader`.
 
 ## Context
 

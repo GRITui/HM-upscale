@@ -24,8 +24,16 @@ class T(unittest.TestCase):
         g = r["regions"][0]
         self.assertEqual((g["type"], g["event"], g["min"], g["max"]), (22, 582, [-10, -20], [30, 40]))
         self.assertEqual(r["instances"][0]["flags"], 0x4000)
-        self.assertEqual(r["models"][0]["primitives"], 65)
+        self.assertEqual(r["models"][0]["prim_count"], 65)
         self.assertEqual(sc.to_json(r)["id"], "map_080")
+
+    def test_region_filter(self):
+        b = bytearray(fixture())
+        struct.pack_into("<22h", b, sc.REGION_OFF + 5 * sc.REGION_SZ, *[0] * 22)
+        # region 0 style: zero flags/type but a real box is kept
+        struct.pack_into("<22h", b, sc.REGION_OFF, 0, 0, -1, 0, 0, 99, 0, -5, 0, -5, 5, 0, 5, *[0] * 9)
+        idx = [g["index"] for g in sc.parse_scene(bytes(b))["regions"]]
+        self.assertEqual(idx, [0, 2])
 
     def test_short(self):
         with self.assertRaises(ValueError):
