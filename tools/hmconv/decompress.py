@@ -99,10 +99,10 @@ def parse_image(data, offset=0):
 
     def read_clut(pos, ncol):
         vals = struct.unpack_from("<%dH" % ncol, data, pos)
-        return [bgr555_to_rgba(v) for v in vals], pos + ncol * 2
+        return [bgr555_to_rgba(v) for v in vals], pos + ncol * 2, list(vals)
 
-    clut, pos = read_clut(pos, ncol)
-    groups = [{"clut_vram": (cx, cy), "clut": clut, "chunks": []}]
+    clut, pos, raw = read_clut(pos, ncol)
+    groups = [{"clut_vram": (cx, cy), "clut": clut, "clut_raw": raw, "chunks": []}]
     items = 1
     while items < n:
         pos = (pos + 1) & ~1
@@ -111,8 +111,8 @@ def parse_image(data, offset=0):
         size, flag, x, y, w, h = struct.unpack_from("<6H", data, pos)
         if flag == 0x600:
             gcx, gcy, gnc = x, y, w
-            clut, pos = read_clut(pos + 12, gnc)
-            groups.append({"clut_vram": (gcx, gcy), "clut": clut, "chunks": []})
+            clut, pos, raw = read_clut(pos + 12, gnc)
+            groups.append({"clut_vram": (gcx, gcy), "clut": clut, "clut_raw": raw, "chunks": []})
             items += 1
             continue
         if size == 0:

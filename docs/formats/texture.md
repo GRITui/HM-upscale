@@ -44,3 +44,25 @@ Payload is RLE (compression.md) or stored.
 
 The 0x0600 and trailing 1 header fields, the exact meaning of flag values 0x0000,
 0x0020, 0x0100, 0x0400.
+
+## VRAM and scene materials (solved)
+
+The PSP build runs the original PS1 renderer, so there is no PSP swizzle. Scene meshes
+name their textures by raw `tpage` and `clut` words, which address a 1024x512 16-bit
+VRAM (tools/hmconv/texture.py):
+
+- tpage: bits 0-3 x base (x 64 words), bit 4 y base (x 256 lines), bits 5-6 blend mode,
+  bits 7-8 colour depth (0 = 4bpp, 1 = 8bpp, 2 = 15bpp direct). The window is 256x256
+  texels; 4bpp packs 4 texels per word, 8bpp 2, low nibble/byte first.
+- clut: x = (clut & 63) * 16, y = clut >> 6; 16 or 256 words at that VRAM position.
+- A scene's gf.bin column-1 image (parse_image) writes every CLUT group (clut_raw words)
+  and every chunk into VRAM; faces then index it. Word 0x0000 is transparent.
+- Validated on farm rows 80, 84, 88, 92: every texel sampled by the faces comes from
+  written VRAM (coverage 1.0) and the atlases look correct.
+- Seasons of one variant share the same image and geometry, so the season GLBs are
+  byte-identical. gf column 2 (a 4096-byte table) did not explain seasonal tinting;
+  its meaning is still unknown.
+
+`texture_glb.py <elf> <seg000.bin> <row> <out.glb>` re-exports a scene with one
+material per (tpage, clut) (`tp<N>_clut<hex>`), embedded PNGs, alphaMode MASK and a
+NEAREST sampler. Output goes to assets/hm-converted/ (git-ignored).
