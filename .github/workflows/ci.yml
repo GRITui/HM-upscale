@@ -1,0 +1,14 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  no-game-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test the path check
+        run: bash tools/hooks/test-check-paths.sh
+      - name: Reject game data in tracked files
+        run: git ls-files | bash tools/hooks/check-paths.sh

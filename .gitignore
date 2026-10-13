@@ -36,3 +36,17 @@ node_modules/
 # Local rule overlay (extracted values; never commit)
 unity/Assets/_HM/Farming/Data/rules.local.json
 unity/Assets/_HM/Farming/Data/rules.local.json.meta
+
+# Extra game-data formats and converted output (see tools/hooks/check-paths.sh)
+*.elf
+*.vag
+*.tm2
+*.bmp
+*.dat
+*.gz
+*.sfo
+*.at3
+*.pmf
+*.gim
+*.pak
+/assets/hm-converted/
