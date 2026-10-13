@@ -80,6 +80,7 @@ namespace HM.Gameplay
                 if (cc != null) cc.enabled = true;
             }
             Loaded = true;
+            ScaleCamera(gameObject.scene);
             try
             {
                 var dir = new GameObject("FarmEventDirector").AddComponent<FarmEventDirector>();
@@ -90,7 +91,7 @@ namespace HM.Gameplay
             try { SpriteLayer.Spawn(player != null ? player.transform : null, spawn.position, transform); }
             catch (Exception e) { Debug.LogWarning(Tag + "sprite layer failed, keeping placeholders: " + e.Message); }
             Debug.Log(Tag + "loaded " + data.id + ": " + Built.WalkableCells + " walkable cells, " + Built.RegionCount + " regions, spawn " + spawn.position
-                + " (scale " + FarmCoords.UnitsToMetres + " m/unit, mirrorX " + FarmCoords.MirrorX + " are assumptions)");
+                + " (scale " + FarmCoords.UnitsToMetres + " m/unit = " + FarmCoords.DecompiledUnitsToMetres + " x world scale " + FarmCoords.WorldScale + ", mirrorX " + FarmCoords.MirrorX + " are assumptions)");
 
             if (!paths.HasGlb) { Debug.Log(Tag + "no scene GLB found; collision only"); return; }
             try
@@ -100,6 +101,8 @@ namespace HM.Gameplay
                 if (!ok) { Debug.LogWarning(Tag + "glTFast failed to load " + paths.Glb); return; }
                 var visuals = new GameObject("FarmVisuals");
                 visuals.transform.SetParent(transform, false);
+                // The converter bakes 0.01 m/unit into the GLB; bring it to the same scale as the collision grid.
+                visuals.transform.localScale = Vector3.one * FarmCoords.GlbScale;
                 await gltf.InstantiateMainSceneAsync(visuals.transform);
                 // The GLB supplies the visible ground; the walk grid stays as invisible collision.
                 foreach (var r in Built.Root.GetComponentsInChildren<MeshRenderer>()) r.enabled = false;
@@ -107,6 +110,14 @@ namespace HM.Gameplay
                 Debug.Log(Tag + "scene GLB instantiated");
             }
             catch (Exception e) { Debug.LogWarning(Tag + "scene GLB failed: " + e.Message); }
+        }
+
+        /// <summary>The scene stores the follow offset for the raw proportions; the overlay world is WorldScale larger.</summary>
+        static void ScaleCamera(Scene scene)
+        {
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var f in root.GetComponentsInChildren<Unity.Cinemachine.CinemachineFollow>(true))
+                    f.FollowOffset = HM.CameraRig.FarmCamera.ScaleOffsetForWorld(f.FollowOffset);
         }
 
         static void HidePlaceholders(Scene scene)

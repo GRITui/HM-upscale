@@ -1,7 +1,7 @@
 {
   "name": "HM.Characters",
   "rootNamespace": "HM.Characters",
-  "references": ["HM.Core","Unity.InputSystem"],
+  "references": ["HM.Core","HM.World","Unity.InputSystem"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

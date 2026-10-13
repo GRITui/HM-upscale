@@ -2,6 +2,7 @@
   "name": "HM.CameraRig",
   "rootNamespace": "HM.CameraRig",
   "references": [
+    "HM.World",
     "Unity.Cinemachine"
   ],
   "includePlatforms": [],

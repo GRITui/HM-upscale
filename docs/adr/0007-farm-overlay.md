@@ -27,7 +27,7 @@ derive from the user's own disc image and are git-ignored. They must never be co
 
 ## Assumptions and checks
 
-All behind `FarmCoords`: `UnitsToMetres = 0.005` (estimate, docs/baseline.md), `MirrorX = true` (glTFast negates X on
+All behind `FarmCoords`: `DecompiledUnitsToMetres = 0.005` (estimate, docs/baseline.md) times `WorldScale = 1.5` (a user design decision, not a measurement) gives `UnitsToMetres = 0.0075`, `MirrorX = true` (glTFast negates X on
 import and the converter writes y = -y), Y down in raw data.
 
 Check performed: PlayMode `FarmOverlayTests.RealFarmWalkGridContainsThePlayer` renders the
@@ -37,4 +37,17 @@ plateau outline of the GLB with the expected orientation, and the player is stop
 walls when pushed in all four directions. This confirms handedness and scale to visual
 precision only; a game-faithful check (walking distances, warp arrival) is still open.
 
-Changing scale or handedness means editing the two constants in `FarmCoords`.
+Changing scale or handedness means editing the constants in `FarmCoords`.
+
+## Decision: the farm is 1.5x larger than the decompiled proportions
+
+The user chose to make the farm feel like a place instead of a 14 m yard. This is a deliberate
+departure from raw proportions, applied from the single source `FarmCoords.WorldScale` (1.5).
+Everything derived from raw units scales with it: walk grid, regions, spawns, actors (all through
+`UnitsToMetres` 0.0075), the GLB (converter writes 0.01 m per unit, so `GlbScale` 0.75), sprite
+billboards (`LoadedSheet.MetresPerPixel` x1.5, so characters stay proportionate to doors and
+furniture rather than shrinking against them), and the camera follow offset (x1.5 at runtime in the
+overlay, preserving framing and on-screen size). Player speed stays 6.15 walk / 10.95 run m/s
+(`FarmCoords.DecompiledMetresPerSecond`), so crossing takes 1.5x longer. The game clock and event
+rules are untouched. Invisible collision proxies (wall height, region height) and the player
+capsule are unchanged.

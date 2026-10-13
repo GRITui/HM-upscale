@@ -24,6 +24,13 @@ namespace HM.CameraRig
             return rot * new Vector3(0f, 0f, -distance);
         }
 
+        /// <summary>
+        /// Scales a follow offset that was authored for the raw proportions (the scene stores distance 20) up to the
+        /// world scale of the farm overlay, so the framing and the character size on screen are unchanged and the
+        /// larger farm is simply larger. The height above the target scales with it.
+        /// </summary>
+        public static Vector3 ScaleOffsetForWorld(Vector3 offset) => offset * HM.World.FarmCoords.WorldScale;
+
         /// <summary>Camera rotation that looks along the orbit direction (towards the target).</summary>
         public static Quaternion Rotation(float pitchDeg, float yawDeg) => Quaternion.Euler(pitchDeg, yawDeg, 0f);
 

@@ -99,8 +99,8 @@ namespace HM.Tests.PlayMode
             yield return Frames(6);
             Assert.IsFalse(dir.Runner.Busy, "script finished");
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
-            Assert.AreEqual(-2.5f, player.transform.position.x, 0.02f, "x mirrored, 0.005 m per unit");
-            Assert.AreEqual(1.5f, player.transform.position.z, 0.02f);
+            Assert.AreEqual(-3.75f, player.transform.position.x, 0.03f, "x mirrored, 0.0075 m per unit (1.5x world)");
+            Assert.AreEqual(2.25f, player.transform.position.z, 0.03f);
             Assert.IsFalse(dir.InputLocked);
         }
 
@@ -154,10 +154,10 @@ namespace HM.Tests.PlayMode
             yield return Frames(3);
             Assert.IsTrue(dir.Runner.Busy, "still walking");
             Assert.AreEqual(0, dir.Runner.State.GetFlag(1), "script waits for arrival");
-            Assert.Less(player.transform.position.z, 0.95f, "not teleported");
+            Assert.Less(player.transform.position.z, 1.4f, "not teleported");
             yield return Sim(1.5f);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1), "script resumed after arrival");
-            Assert.AreEqual(1f, player.transform.position.z, 0.02f);
+            Assert.AreEqual(1.5f, player.transform.position.z, 0.03f);
         }
 
         [UnityTest]
@@ -166,7 +166,7 @@ namespace HM.Tests.PlayMode
             Build(7, Move(0, 0x29, 1, 300), C(19, 0x31, 0, 1, 0));
             yield return Sim(1.5f);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
-            Assert.AreEqual(-1.5f, player.transform.position.x, 0.02f, "raw +x is world -x");
+            Assert.AreEqual(-2.25f, player.transform.position.x, 0.03f, "raw +x is world -x");
         }
 
         [Test]
@@ -219,7 +219,7 @@ namespace HM.Tests.PlayMode
             yield return Sim(1.2f);
             Object.Destroy(npc);
             Assert.AreEqual(1, dir.Runner.State.GetFlag(1));
-            Assert.AreEqual(0.5f, npc.transform.position.z, 0.02f);
+            Assert.AreEqual(0.75f, npc.transform.position.z, 0.03f);
         }
 
         [Test]

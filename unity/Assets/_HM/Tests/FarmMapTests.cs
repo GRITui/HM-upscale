@@ -140,8 +140,23 @@ namespace HM.Tests
         public void WalkPaceMatchesTheDecompiledRawSpeed()
         {
             // 41 raw units per 30 Hz update (hmpsp.prx FUN_0004786c); see docs/baseline.md.
-            Assert.AreEqual(6.15f, 41f * 30f * FarmCoords.UnitsToMetres, 1e-3f);
-            Assert.AreEqual(10.95f, 73f * 30f * FarmCoords.UnitsToMetres, 1e-3f);
+            Assert.AreEqual(6.15f, FarmCoords.WalkUnitsPerSecond * FarmCoords.DecompiledUnitsToMetres, 1e-3f);
+            Assert.AreEqual(10.95f, FarmCoords.RunUnitsPerSecond * FarmCoords.DecompiledUnitsToMetres, 1e-3f);
+            Assert.AreEqual(6.15f, FarmCoords.DecompiledMetresPerSecond, 1e-3f);
+            Assert.AreEqual(10.95f, FarmCoords.DecompiledRunMetresPerSecond, 1e-3f);
+        }
+
+        [Test]
+        public void WorldIsOnePointFiveTimesTheDecompiledEstimateByDesign()
+        {
+            Assert.AreEqual(1.5f, FarmCoords.WorldScale, 1e-6f);
+            Assert.AreEqual(0.0075f, FarmCoords.UnitsToMetres, 1e-6f);
+            Assert.AreEqual(0.75f, FarmCoords.GlbScale, 1e-6f);
+            // Same m/s over a 1.5x larger world: crossing takes 1.5x longer.
+            const float rawSpan = 2000f;
+            float original = rawSpan * FarmCoords.DecompiledUnitsToMetres / FarmCoords.DecompiledMetresPerSecond;
+            float now = rawSpan * FarmCoords.UnitsToMetres / FarmCoords.DecompiledMetresPerSecond;
+            Assert.AreEqual(1.5f, now / original, 1e-4f);
         }
 
         [Test]

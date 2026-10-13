@@ -1,7 +1,7 @@
 {
   "name": "HM.Sprites",
   "rootNamespace": "HM.Sprites",
-  "references": [],
+  "references": ["HM.World"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

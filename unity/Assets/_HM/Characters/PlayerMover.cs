@@ -1,3 +1,4 @@
+using HM.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,9 +10,11 @@ namespace HM.Characters
     {
         // Static decompile of hmpsp.prx (docs/baseline.md): walk is 41 raw units per 30 Hz update = 1230 units/s,
         // run is 73 per update = 2190 units/s (confidence high for walk, medium for run: the run button is
-        // unverified). At FarmCoords.UnitsToMetres 0.005 (estimate, confidence medium) that is 6.15 and 10.95 m/s.
-        [SerializeField] float walkSpeed = 6.15f;
-        [SerializeField] float runSpeed = 10.95f;
+        // unverified). At the decompiled estimate 0.005 m/unit (confidence medium) that is 6.15 and 10.95 m/s. The
+        // farm is built FarmCoords.WorldScale (1.5x) larger by design, but the pace stays at these metre values, so
+        // crossing takes 1.5x longer. Do not multiply by WorldScale here.
+        [SerializeField] float walkSpeed = FarmCoords.DecompiledMetresPerSecond;
+        [SerializeField] float runSpeed = FarmCoords.DecompiledRunMetresPerSecond;
         [SerializeField] float turnSharpness = 14f;
         [SerializeField] float gravity = -20f;
 

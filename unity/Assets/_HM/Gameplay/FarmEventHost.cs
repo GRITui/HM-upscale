@@ -122,10 +122,11 @@ namespace HM.Gameplay
 
         // ---- walking ----
         /// <summary>Metres per second at the walk speed code (12). Other codes scale linearly (run is 20).
-        /// 1230 raw units/s (41 per 30 Hz update, static decompile of the original) times
-        /// the 0.005 unit scale = 6.15 m/s. Source: docs/baseline.md; confidence high for the raw speed, medium
-        /// for the metre value.</summary>
-        public const float WalkMetresPerSecond = 1230f * HM.World.FarmCoords.UnitsToMetres;
+        /// 1230 raw units/s (41 per 30 Hz update, static decompile of the original) times the decompiled 0.005
+        /// unit scale = 6.15 m/s. Source: docs/baseline.md; confidence high for the raw speed, medium for the
+        /// metre value. Not multiplied by FarmCoords.WorldScale: scripted moves keep the player's pace (same
+        /// number as PlayerMover), so a walk over the 1.5x farm takes 1.5x longer in real time.</summary>
+        public const float WalkMetresPerSecond = HM.World.FarmCoords.DecompiledMetresPerSecond;
         public const int WalkSpeedCode = 12;
         /// <summary>A walk that makes no progress for this long is abandoned so a script never stalls on a wall.</summary>
         public const float BlockedTimeout = 0.75f;

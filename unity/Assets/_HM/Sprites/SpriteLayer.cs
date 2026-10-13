@@ -45,7 +45,7 @@ namespace HM.Sprites
             }
             else Debug.Log(Tag + "player sheet missing; keeping the placeholder player");
 
-            var demo = new (string role, Vector3 offset)[] { ("cow", new Vector3(3f, 0f, 2f)), ("sheep", new Vector3(-3f, 0f, 3f)) };
+            var demo = new (string role, Vector3 offset)[] { ("cow", new Vector3(3f, 0f, 2f) * HM.World.FarmCoords.WorldScale), ("sheep", new Vector3(-3f, 0f, 3f) * HM.World.FarmCoords.WorldScale) };
             foreach (var (role, off) in demo)
             {
                 var s = Get(role);

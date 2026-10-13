@@ -119,9 +119,9 @@ via `input.buttons.send` only moves if re-sent about every 30 ms.
 
 ### Retuned in Unity
 
-- `FarmCoords.UnitsToMetres` 0.005 (was 0.01), `MirrorX` unchanged.
-- `PlayerMover` walk 6.15 m/s, run 10.95 m/s (73/41 of walk).
-- `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.005 = 6.15 m/s.
+- `FarmCoords.DecompiledUnitsToMetres` 0.005 (the estimate), `MirrorX` unchanged.
+- DESIGN DECISION (user approved, not a measurement): the farm is built 1.5x larger than the decompiled proportions so it feels like a place rather than a 14 m yard. `FarmCoords.WorldScale = 1.5`, so `UnitsToMetres = 0.0075` (a 2747-unit yard is about 20.6 m). Terrain, collision, regions, spawns, NPC and actor positions, the GLB (`GlbScale` 0.75), sprites (pixels per unit x1.5, so characters stay in proportion to doors and furniture) and the camera follow distance (20 to 30 m, same framing) all derive from it.
+- Speeds stay in the decompiled metres: `PlayerMover` walk 6.15 m/s, run 10.95 m/s (73/41 of walk), `FarmEventHost.WalkMetresPerSecond` = 1230 * 0.005 = 6.15 m/s. Crossing the larger world therefore takes 1.5x longer. Game clock, event timing and rules are unchanged.
 - Game clock stays at 2 minutes per real second (matches the measurement).
 - Camera: not measured, unchanged.
 
@@ -137,7 +137,7 @@ in a 16:9 frame; the captured window letterboxes it.
 
 ## Unanswered
 
-- The metre scale (0.005 is an estimate) and a mirror-faithful import.
+- The metre scale (0.005 is an estimate; the shipped world is 1.5x it by design) and a mirror-faithful import.
 - Run button identity, and the forced-sleep location.
 - Camera yaw, pitch and FOV for the farm map (only the look-at structure and H = 1000 are known).
 - Player position address confirmation in the emulator (one spot-check pending).

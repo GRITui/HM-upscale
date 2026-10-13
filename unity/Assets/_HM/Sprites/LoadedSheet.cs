@@ -7,8 +7,11 @@ namespace HM.Sprites
     /// <summary>A sheet's decoded data plus one point-filtered Sprite per non-empty cell. CLUT colours are already baked into the PNG.</summary>
     public sealed class LoadedSheet
     {
-        /// <summary>World metres per sprite pixel (a 46 px tall boy comes out about 1.4 m).</summary>
-        public const float MetresPerPixel = 0.03f;
+        /// <summary>Metres per sprite pixel at the raw proportions (a 46 px tall boy is about 1.4 m).</summary>
+        public const float BaseMetresPerPixel = 0.03f;
+        /// <summary>World metres per sprite pixel. Characters scale with the world (FarmCoords.WorldScale, 1.5x by
+        /// design) so they stay proportionate to the doors and furniture of the GLB: a 46 px boy is about 2.1 m.</summary>
+        public const float MetresPerPixel = BaseMetresPerPixel * HM.World.FarmCoords.WorldScale;
 
         public SpriteSheetData Data;
         public Texture2D Texture;
