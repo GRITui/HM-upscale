@@ -39,6 +39,25 @@ Source: reading the clock tick and new-game init in the EBOOT. Structural, not g
 | new game | year 0, spring, day index 1, weekday 1, 06:00 | medium |
 | festival table | 18 rows (season, day, event id); first 14 scanned by the lookup | medium |
 
-Not decoded yet: forced-sleep time (hours 0 to 5 are a distinct night band), crop growth days,
-stamina costs, starting gold and inventory, affection scale. None of these tags change in
-rules.json; it stays placeholder-only.
+## Decoded economy (tools/hmconv/economy.py)
+
+Source: player-init, daily crop update, fatigue and item/crop tables in the EBOOT. Per-crop
+numbers are written only to the git-ignored assets/hm-converted/, never committed.
+
+| rule | decoded | confidence |
+|---|---|---|
+| starting gold, stamina | gold 500; stamina 100 of 100; max stamina cap 255 (committed in rules.json) | high |
+| fatigue | 0 to 100; stamina and fatigue changed together by one modifier; gain depends on hour | medium |
+| pass-out sleep | fatigue 50-69 sleeps 2 h, 70-79 sleeps 4 h, 80+ sleeps 6 h; day rolls at 06:00 | medium |
+| crop table | 22 seed indices: season, stage count, regrow stage, 4 stage-day values, produce row | high |
+| growth days | sum of the first N stage-day values (N = stage count) | high |
+| season death | a crop whose season differs from the current season dies in the daily update | high |
+| watering | watered ground tile advances the crop one day, then reverts to dry; dry tile does not | high |
+| seed buy price, produce sell price | seed row field 8, produce row field 9 of the item table | high |
+| item table alignment | base vaddr 0x1275A8, stride 0x28 (tables.py base is 0x20 bytes high) | high |
+
+Not decoded yet: forced-sleep clock cutoff (no hour trigger found; 02:00 stays a placeholder),
+per-tool stamina costs (a table of -1 to -5 exists at vaddr 0x13760A, indexing unclear),
+starting inventory, affection scale and heart tiers, animals, cooking, regrow-stage meaning,
+and the mapping from the 22 seed indices to repo crop ids (crop entries in rules.json stay
+placeholder).

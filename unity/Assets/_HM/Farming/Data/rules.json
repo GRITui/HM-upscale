@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "startingGold": { "value": 300, "source": "placeholder", "confidence": "low" },
-  "maxStamina": { "value": 100, "source": "placeholder", "confidence": "low" },
+  "startingGold": { "value": 500, "source": "extracted", "confidence": "high" },
+  "maxStamina": { "value": 100, "source": "extracted", "confidence": "high" },
   "tools": [
     { "id": "hoe",         "staminaCost": { "value": 4, "source": "placeholder", "confidence": "low" } },
     { "id": "wateringCan", "staminaCost": { "value": 2, "source": "placeholder", "confidence": "low" } },
